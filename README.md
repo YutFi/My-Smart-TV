@@ -1,5 +1,7 @@
 # MY SMART TV
 
+**Download the Windows installer:** [MY-SMART-TV-Setup-1.0.0.exe](https://github.com/YutFi/My-Smart-TV/releases/latest) (GitHub Releases)
+
 Turn a Windows 10/11 PC into a Smart TV box. Connect it to your television over HDMI, pick that input, and MY SMART TV opens full screen with Live TV (IPTV + guide), movies & series, sports, YouTube, streaming-app shortcuts, music and your own media — all navigable from a sofa with a keyboard, air mouse, game controller or a phone remote such as **Unified Remote**.
 
 ## Install (end user)
