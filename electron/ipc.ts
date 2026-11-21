@@ -209,6 +209,7 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
   handle('launch:vlc', (_e, target: string) => launcher.openInVlc(target));
   handle('launch:home', () => launcher.bringTvToFront('manual'));
   handle('launch:browsers', () => launcher.detectBrowsers());
+  handle('recents:add', (_e, pid: number, appId: string) => { run('INSERT INTO recent_apps(profile_id,app_id,opened) VALUES (?,?,?) ON CONFLICT(profile_id,app_id) DO UPDATE SET opened=excluded.opened', pid, String(appId).slice(0, 500), Date.now()); });
   handle('recents:apps', (_e, pid: number) => all<any>('SELECT app_id, opened FROM recent_apps WHERE profile_id=? ORDER BY opened DESC LIMIT 12', pid).map((r) => r.app_id));
   handle('open:external', (_e, url: string) => { if (/^https?:\/\//i.test(url)) return shell.openExternal(url); });
 

@@ -3,8 +3,8 @@ import { api, type Game, type Title } from '../lib/api';
 import { nav, pid, useApp, useAsync, useLists, ratingAllowed, localRequest, playMedia, channelRequest, toast } from '../lib/app';
 import { Card, Row } from '../components/ui';
 import { Hero, type HeroSlide } from '../components/Hero';
-import { AppTile, GameCard, ListItemCard, PageScroll, SetupCard, TitleCard, launchApp, openListItem, openTitle } from '../components/content';
-import { STREAMING_APPS } from '../../shared/types';
+import { AppTile, GameCard, ListItemCard, PageScroll, SiteTile, SetupCard, TitleCard, launchApp, openListItem, openTitle } from '../components/content';
+import { STREAMING_APPS, type ListItem } from '../../shared/types';
 
 function useTitles(kind: 'movie' | 'tv', which: string, maxRating?: string) {
   const { data } = useAsync(async () => ((await api.tmdb.status()).hasKey ? await api.tmdb.list(kind, which, { maxRating }) : null), [kind, which, maxRating]);
@@ -122,10 +122,23 @@ function SportsRow() {
   return <Row title="Sports" subtitle="Live now & upcoming">{data.map((g) => <GameCard key={g.id} g={g} fk={`sp:${g.id}`} />)}</Row>;
 }
 
+// Apps and websites together: recently opened first, then your own websites, then the built-in services.
 function AppsRow() {
-  const { data } = useAsync(() => api.launch.recents(pid()), []);
-  const apps = [...(data || []).map((id) => STREAMING_APPS.find((a) => a.id === id)).filter(Boolean), ...STREAMING_APPS].filter((a, i, arr) => arr.indexOf(a) === i) as typeof STREAMING_APPS;
-  return <Row title="Streaming Apps" subtitle={data?.length ? 'Recently opened first' : undefined}>{apps.map((a) => <AppTile key={a.id} app={a} fk={`app:${a.id}`} />)}</Row>;
+  const { data } = useAsync(async () => ({ recents: await api.launch.recents(pid()), sites: await api.lists.get(pid(), 'sites') }), []);
+  type Entry = { key: string; app?: (typeof STREAMING_APPS)[number]; site?: ListItem };
+  const entries: Entry[] = [];
+  const seen = new Set<string>();
+  const push = (e: Entry) => { if (!seen.has(e.key)) { seen.add(e.key); entries.push(e); } };
+  const siteByRef = new Map((data?.sites || []).map((s) => [`site:${s.ref}`, s]));
+  for (const id of data?.recents || []) { const a = STREAMING_APPS.find((x) => x.id === id); if (a) push({ key: a.id, app: a }); else if (siteByRef.has(id)) push({ key: id, site: siteByRef.get(id) }); }
+  for (const s of data?.sites || []) push({ key: `site:${s.ref}`, site: s });
+  for (const a of STREAMING_APPS) push({ key: a.id, app: a });
+  return (
+    <Row title="Apps & Websites" subtitle={data?.recents.length ? 'Recently opened first' : data?.sites.length ? 'Including your websites' : undefined}>
+      {entries.map((e) => (e.app ? <AppTile key={e.key} app={e.app} fk={`app:${e.key}`} /> : <SiteTile key={e.key} it={e.site!} fk={`app:${e.key}`} />))}
+      <SetupCard fk="app:add" icon="＋" title="Add a website" text="Put any streaming site or web app on your Home screen." action="Open Apps" onSelect={() => nav.go('apps')} />
+    </Row>
+  );
 }
 
 function YoutubeRow() {

@@ -37,6 +37,7 @@ export interface Settings {
   browser: 'auto' | 'edge' | 'chrome' | 'default';
   // smart
   screensaverMinutes: number; // 0 = off
+  screensaverStyle: 'auto' | 'aurora' | 'stars' | 'bokeh' | 'waves' | 'artwork';
   sleepAction: 'stop' | 'sleep-pc';
   // parental
   parentalEnabled: boolean;
@@ -78,7 +79,8 @@ export const DEFAULT_SETTINGS: Settings = {
   tmdbKey: '',
   youtubeKey: '',
   browser: 'auto',
-  screensaverMinutes: 10,
+  screensaverMinutes: 5,
+  screensaverStyle: 'auto',
   sleepAction: 'stop',
   parentalEnabled: false,
   lastRoute: 'home',

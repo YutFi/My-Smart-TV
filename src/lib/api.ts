@@ -109,6 +109,7 @@ export const api = {
     home: () => inv('launch:home'),
     browsers: (): Promise<{ edge: string; chrome: string; vlc: string }> => inv('launch:browsers'),
     recents: (pid: number): Promise<string[]> => inv('recents:apps', pid),
+    addRecent: (pid: number, id: string) => inv('recents:add', pid, id),
     external: (url: string) => inv('open:external', url),
   },
   display: { list: (): Promise<DisplayInfo[]> => inv('display:list') },

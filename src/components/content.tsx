@@ -44,7 +44,13 @@ export async function openListItem(it: ListItem | HistoryItem, resume = true) {
     case 'youtube': openYoutubeVideo({ id: it.ref, title: it.title, thumb: it.image }); return;
     case 'station': playMedia({ type: 'audio', url: it.data?.url || it.ref, title: it.title, subtitle: it.sub, image: it.image, kind: 'station', ref: it.ref, isRadio: true, data: it.data }); return;
     case 'team': nav.go('sports'); return;
-    case 'site': { const r = await api.launch.url(it.ref, { label: it.title }); if (!r.ok) toast(r.error || 'Could not open the website', 'error'); return; }
+    case 'site': {
+      api.launch.addRecent(pid(), `site:${it.ref}`).catch(() => undefined);
+      const r = await api.launch.url(it.ref, { label: it.title });
+      if (!r.ok) toast(r.error || 'Could not open the website', 'error');
+      else toast(`Opening ${it.title}… use the ⌂ MY SMART TV button (top-left) to come back`, 'info', 5000);
+      return;
+    }
   }
 }
 
@@ -61,6 +67,20 @@ export function AppTile({ app, fk, autoFocus }: { app: (typeof STREAMING_APPS)[n
       <Focusable fk={fk} autoFocus={autoFocus} onSelect={() => launchApp(app.id)} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, ${app.color}, ${app.color2})` }}>
         <span className="px-[0.6rem] text-center text-[1.75rem] font-black leading-none tracking-tight text-white drop-shadow-lg">{app.text}</span>
         <span className="absolute bottom-[0.45rem] right-[0.7rem] text-[0.75rem] font-semibold text-white/70">{app.name}</span>
+      </Focusable>
+    </div>
+  );
+}
+
+// Tile for a website the user added (Apps → Add a website). Same look as the app tiles, colored from the name.
+export function SiteTile({ it, fk, onKey }: { it: ListItem; fk: string; onKey?: (e: any) => boolean | void }) {
+  let h = 0; for (let i = 0; i < it.title.length; i++) h = (h * 31 + it.title.charCodeAt(i)) % 360;
+  let host = ''; try { host = new URL(it.ref).host.replace(/^www\./, ''); } catch { /* ignore */ }
+  return (
+    <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
+      <Focusable fk={fk} onSelect={() => openListItem(it)} onKey={onKey} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, hsl(${h} 65% 42%), hsl(${(h + 40) % 360} 70% 18%))` }}>
+        <span className="clamp-2 px-[0.8rem] text-center text-[1.6rem] font-black leading-tight tracking-tight text-white drop-shadow-lg">{it.title}</span>
+        <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">🌐 {host}</span>
       </Focusable>
     </div>
   );

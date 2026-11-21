@@ -8,6 +8,7 @@ import { PlaylistManager } from '../components/PlaylistManager';
 import { ProfileEditor } from '../components/Profiles';
 import { PageScroll } from '../components/content';
 import { setSleepTimer } from '../lib/sleep';
+import { previewScreensaver } from '../components/Screensaver';
 import { fmtBytes } from '../lib/format';
 import { Header } from './Titles';
 import type { Profile } from '../../shared/types';
@@ -68,7 +69,9 @@ function General() {
       <SectionTitle>Power</SectionTitle>
       <SettingRow label="Sleep timer" desc="Stop playback after a set time." right="Set ›" onSelect={() => setSleep(true)} />
       <ChoiceRow label="When the sleep timer ends" value={s.sleepAction} onChange={(v) => updateSettings({ sleepAction: v })} options={[{ value: 'stop', label: 'Stop playback' }, { value: 'sleep-pc', label: 'Stop and put the PC to sleep' }]} />
-      <ChoiceRow label="Screensaver" desc="Shown after inactivity when nothing is playing." value={s.screensaverMinutes} onChange={(v) => updateSettings({ screensaverMinutes: v })} options={[{ value: 0, label: 'Off' }, { value: 3, label: '3 minutes' }, { value: 5, label: '5 minutes' }, { value: 10, label: '10 minutes' }, { value: 20, label: '20 minutes' }]} />
+      <ChoiceRow label="Screensaver starts after" desc="Animated ambient scenes appear after inactivity when nothing is playing." value={s.screensaverMinutes} onChange={(v) => updateSettings({ screensaverMinutes: v })} options={[{ value: 0, label: 'Never' }, { value: 1, label: '1 minute' }, { value: 3, label: '3 minutes' }, { value: 5, label: '5 minutes' }, { value: 10, label: '10 minutes' }, { value: 20, label: '20 minutes' }]} />
+      <ChoiceRow label="Screensaver style" value={s.screensaverStyle} onChange={(v) => updateSettings({ screensaverStyle: v })} options={[{ value: 'auto', label: 'Auto (rotates all scenes)' }, { value: 'aurora', label: 'Aurora lights' }, { value: 'stars', label: 'Starfield' }, { value: 'bokeh', label: 'Floating lights' }, { value: 'waves', label: 'Moonlit waves' }, { value: 'artwork', label: 'Movie artwork (needs TMDB key)' }]} />
+      <SettingRow label="Preview screensaver" desc="Press any key to exit the preview." right="▶ Preview" onSelect={() => previewScreensaver()} />
       {rows && <HomeRows onClose={() => setRows(false)} />}
       {sleep && (
         <Modal title="Sleep timer" onClose={() => setSleep(false)} width={40}>
@@ -79,7 +82,7 @@ function General() {
   );
 }
 
-const ROW_LABELS: Record<string, string> = { continue: 'Continue Watching', live: 'Live TV', trending: 'Trending Movies', series: 'Popular Series', sports: 'Sports', apps: 'Streaming Apps', youtube: 'YouTube', music: 'Music', media: 'My Media', favorites: 'Favorites', watchlist: 'Watchlist', recent: 'Recently Watched', recommended: 'Recommended' };
+const ROW_LABELS: Record<string, string> = { continue: 'Continue Watching', live: 'Live TV', trending: 'Trending Movies', series: 'Popular Series', sports: 'Sports', apps: 'Apps & Websites', youtube: 'YouTube', music: 'Music', media: 'My Media', favorites: 'Favorites', watchlist: 'Watchlist', recent: 'Recently Watched', recommended: 'Recommended' };
 function HomeRows({ onClose }: { onClose: () => void }) {
   const s = useApp().settings;
   const all = Object.keys(ROW_LABELS);

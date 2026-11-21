@@ -3,7 +3,7 @@ import { api } from '../lib/api';
 import { pid, toast, useAsync } from '../lib/app';
 import { Button, Card, Focusable, Modal, Row } from '../components/ui';
 import { TextField } from '../components/osk';
-import { AppTile, PageScroll, launchApp, openListItem } from '../components/content';
+import { AppTile, PageScroll, SiteTile } from '../components/content';
 import { Header } from './Titles';
 import { STREAMING_APPS } from '../../shared/types';
 
@@ -23,7 +23,7 @@ export function Apps() {
       {recent.length > 0 && <Row title="Recently Opened">{recent.map((a) => <AppTile key={a.id} app={a} fk={`r:${a.id}`} />)}</Row>}
       <Row title="All Apps">{STREAMING_APPS.map((a, i) => <AppTile key={a.id} app={a} fk={`a:${a.id}`} />)}</Row>
       <Row title="My Websites" subtitle="Any streaming site or web app">
-        {sites.data?.map((s) => <Card key={s.ref} fk={`site:${s.ref}`} shape="logo" title={s.title} sub={new URL(s.ref).host} icon="🌐" onSelect={() => openListItem(s)} onKey={(e) => { if (e.k === 'menu') { api.lists.toggle(pid(), 'sites', s).then(sites.reload); return true; } }} />)}
+        {sites.data?.map((s) => <SiteTile key={s.ref} it={s} fk={`site:${s.ref}`} onKey={(e) => { if (e.k === 'menu') { api.lists.toggle(pid(), 'sites', s).then(sites.reload); return true; } }} />)}
         <Card fk="site:add" shape="logo" title="Add website" sub="Name + address" icon="＋" onSelect={() => setAdd(true)} />
       </Row>
       <div className="px-[3.5rem] pt-[1rem] text-[1.05rem] leading-relaxed text-white/50">
