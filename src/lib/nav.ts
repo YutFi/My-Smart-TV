@@ -267,7 +267,7 @@ function pollPads() {
     press('left', b(14) || ax < -0.6, 'left'); press('right', b(15) || ax > 0.6, 'right');
     press('a', b(0), 'select'); press('b', b(1), 'back'); press('x', b(2), 'playpause'); press('y', b(3), 'menu');
     press('lb', b(4), 'prev'); press('rb', b(5), 'next'); press('lt', b(6), 'rw'); press('rt', b(7), 'ff');
-    press('start', b(9), 'home'); press('sel', b(8), 'menu');
+    press('start', b(9), 'home'); press('sel', b(8), 'menu'); press('ps', b(16), 'home'); // PS / Xbox guide button = Home
   }
   requestAnimationFrame(pollPads);
 }

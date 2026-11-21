@@ -212,6 +212,7 @@ export interface StreamingApp {
 }
 
 export const STREAMING_APPS: StreamingApp[] = [
+  { id: 'nebula', name: 'Nebula Cloud Gaming', url: 'https://nebula.my/', color: '#7c3aed', color2: '#0e7490', text: 'NEBULA', note: 'Cloud gaming (works with a PS4/DualShock controller in the browser)' },
   { id: 'netflix', name: 'Netflix', url: 'https://www.netflix.com/browse', color: '#e50914', color2: '#7a0309', text: 'NETFLIX' },
   { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/', color: '#ff0033', color2: '#8a0019', text: 'YouTube', tv: true },
   { id: 'disney', name: 'Disney+', url: 'https://www.disneyplus.com/', color: '#1a3cff', color2: '#0b1d80', text: 'Disney+' },

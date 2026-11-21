@@ -207,6 +207,7 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     return { ...launcher.launchUrl(a.url, { tv: a.tv && false, label: a.name }), via: 'browser' };
   });
   handle('launch:vlc', (_e, target: string) => launcher.openInVlc(target));
+  handle('launch:browserSetup', (_e, url: string) => launcher.openBrowserSetup(url));
   handle('launch:home', () => launcher.bringTvToFront('manual'));
   handle('launch:browsers', () => launcher.detectBrowsers());
   handle('recents:add', (_e, pid: number, appId: string) => { run('INSERT INTO recent_apps(profile_id,app_id,opened) VALUES (?,?,?) ON CONFLICT(profile_id,app_id) DO UPDATE SET opened=excluded.opened', pid, String(appId).slice(0, 500), Date.now()); });

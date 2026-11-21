@@ -57,7 +57,7 @@ export function Card({ title, sub, image, onSelect, fk, autoFocus, shape = 'post
       <Focusable fk={fk} autoFocus={autoFocus} onSelect={onSelect} onKey={onKey} className="f-card relative block overflow-hidden rounded-[0.9rem] bg-ink-700" style={{ width: `${w}rem`, aspectRatio: aspect }}>
         {shape === 'logo' ? (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-ink-600 to-ink-800 p-[1.4rem]">
-            <Art src={image} title={title} fit="contain" className="max-h-full max-w-full" style={{ width: '100%', height: '100%' }} />
+            <Art src={image} title={title} fit="contain" quiet={!!icon} className="max-h-full max-w-full" style={{ width: '100%', height: '100%' }} />
           </div>
         ) : <Art src={image} title={title} fit={fit} quiet={!!icon} className="absolute inset-0 h-full w-full" />}
         {icon && <div className="absolute inset-0 flex items-center justify-center text-[3rem]">{icon}</div>}

@@ -120,6 +120,26 @@ export function launchUrl(url: string, opts: { tv?: boolean; label?: string } = 
   }
 }
 
+// Opens the streaming browser profile as a normal window (with toolbar + extensions) so the user can install an ad blocker
+// or sign in once. Extensions installed here also apply to the full-screen app windows, which share the profile.
+export function openBrowserSetup(url: string): { ok: boolean; error?: string } {
+  if (!/^https:\/\//i.test(url)) return { ok: false, error: 'Only https addresses can be opened.' };
+  const b = detectBrowsers();
+  const exe = b.edge || b.chrome;
+  if (!exe) { shell.openExternal(url).catch(() => undefined); return { ok: true }; }
+  const profile = path.join(app.getPath('userData'), 'browser-profile');
+  fs.mkdirSync(profile, { recursive: true });
+  const w = getMainWindow();
+  if (child && child.pid) execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], () => undefined);
+  const mine = spawn(exe, [`--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--new-window', url], { stdio: 'ignore' });
+  child = mine; childLabel = 'Browser setup';
+  mine.on('exit', () => { if (child === mine) { child = null; bringTvToFront('browser-closed'); } });
+  mine.on('error', () => { if (child === mine) { child = null; bringTvToFront('browser-error'); } });
+  setTimeout(() => { if (w && !w.isDestroyed()) w.minimize(); }, 900);
+  showReturnButton();
+  return { ok: true };
+}
+
 export function launchProtocol(uri: string): boolean {
   // only well-known, whitelisted protocol handlers
   if (!/^(spotify:|ms-windows-store:)/i.test(uri)) return false;

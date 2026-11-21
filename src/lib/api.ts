@@ -106,6 +106,7 @@ export const api = {
     url: (url: string, o: { tv?: boolean; label?: string } = {}): Promise<{ ok: boolean; error?: string }> => inv('launch:url', url, o),
     app: (pid: number, id: string): Promise<{ ok: boolean; error?: string }> => inv('launch:app', pid, id),
     vlc: (t: string): Promise<{ ok: boolean; error?: string }> => inv('launch:vlc', t),
+    browserSetup: (url: string): Promise<{ ok: boolean; error?: string }> => inv('launch:browserSetup', url),
     home: () => inv('launch:home'),
     browsers: (): Promise<{ edge: string; chrome: string; vlc: string }> => inv('launch:browsers'),
     recents: (pid: number): Promise<string[]> => inv('recents:apps', pid),

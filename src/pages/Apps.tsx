@@ -18,7 +18,7 @@ export function Apps() {
   return (
     <PageScroll>
       <Header title="Streaming Apps" subtitle="Opens the official service in full screen. Sign in once — your session is remembered." />
-      <div className="px-[3.5rem] pb-[0.6rem]"><Button primary autoFocus icon="＋" onSelect={() => setAdd(true)}>Add a website</Button></div>
+      <div className="flex px-[3.5rem] pb-[0.6rem]"><Button primary autoFocus icon="＋" onSelect={() => setAdd(true)}>Add a website</Button></div>
       {noBrowser &&<div className="mx-[3.5rem] mb-[0.8rem] rounded-xl bg-amber-500/15 px-[1.2rem] py-[0.8rem] text-[1.1rem] text-amber-200">Microsoft Edge or Google Chrome wasn’t found, so apps will open in your default browser instead.</div>}
       {recent.length > 0 && <Row title="Recently Opened">{recent.map((a) => <AppTile key={a.id} app={a} fk={`r:${a.id}`} />)}</Row>}
       <Row title="All Apps">{STREAMING_APPS.map((a, i) => <AppTile key={a.id} app={a} fk={`a:${a.id}`} />)}</Row>
