@@ -1,0 +1,84 @@
+{
+    "name": "my-smart-tv",
+    "productName": "MY SMART TV",
+    "version": "1.0.0",
+    "description": "Turn your Windows PC into a Smart TV box over HDMI.",
+    "author": "MY SMART TV",
+    "private": true,
+    "main": "dist-electron/main.js",
+    "scripts": {
+        "dev:renderer": "vite",
+        "build:renderer": "vite build",
+        "build:main": "node scripts/build-main.mjs",
+        "build": "npm run build:renderer && npm run build:main",
+        "typecheck": "tsc --noEmit",
+        "start": "npm run build && electron .",
+        "electron": "electron .",
+        "dist": "npm run build && electron-builder --win nsis",
+        "pack": "npm run build && electron-builder --win --dir"
+    },
+    "build": {
+        "appId": "com.mysmarttv.app",
+        "productName": "MY SMART TV",
+        "directories": {
+            "output": "release",
+            "buildResources": "build"
+        },
+        "files": [
+            "dist/**/*",
+            "dist-electron/**/*",
+            "package.json"
+        ],
+        "asar": true,
+        "win": {
+            "target": [
+                {
+                    "target": "nsis",
+                    "arch": [
+                        "x64"
+                    ]
+                }
+            ],
+            "icon": "build/icon.ico",
+            "signAndEditExecutable": false,
+            "artifactName": "MY-SMART-TV-Setup-${version}.${ext}"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "MY SMART TV",
+            "runAfterFinish": true,
+            "deleteAppDataOnUninstall": false,
+            "installerIcon": "build/icon.ico",
+            "uninstallerIcon": "build/icon.ico"
+        },
+        "electronDist": "node_modules/electron/dist",
+        "npmRebuild": false,
+        "publish": null
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.6",
+        "@types/react": "^19.3.0",
+        "@types/react-dom": "^19.3.0",
+        "@vitejs/plugin-react": "^6.3.0",
+        "autoprefixer": "^10.7.0",
+        "electron": "^45.4.1",
+        "electron-builder": "^26.18.0",
+        "esbuild": "^0.28.2",
+        "postcss": "^8.5.33",
+        "tailwindcss": "^3.4.19",
+        "typescript": "^7.0.2",
+        "vite": "^8.3.8"
+    },
+    "dependencies": {
+        "dashjs": "^5.3.0",
+        "electron-updater": "^6.8.11",
+        "hls.js": "^1.7.4",
+        "mpegts.js": "^1.8.2",
+        "react": "^19.3.1",
+        "react-dom": "^19.3.1"
+    }
+}
