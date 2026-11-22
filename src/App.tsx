@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from './lib/api';
 import { appStore, loadLists, nav, reloadProfiles, routeStore, toast, TABS, updateSettings, useApp, useRoute, playMedia, channelRequest, isKids } from './lib/app';
 import { initNav, setDefaultBack, setDefaultHome, useKeys } from './lib/nav';
@@ -6,6 +6,9 @@ import { Background, TopNav, Toasts } from './components/Shell';
 import { PlayerHost } from './components/PlayerHost';
 import { Screensaver } from './components/Screensaver';
 import { FocusGlow } from './components/Effects';
+import { Splash } from './components/Splash';
+import { cancelSplash } from './lib/splash';
+import { configureSfx, initSfx, play } from './lib/sfx';
 import { ProfilePicker } from './components/Profiles';
 import { PinPrompt } from './components/osk';
 import { Button, Modal } from './components/ui';
@@ -70,6 +73,7 @@ export default function App() {
   // ---- boot ----
   useEffect(() => {
     initNav();
+    initSfx();
     setDefaultBack(() => nav.back());
     setDefaultHome(() => nav.go('home'));
     (async () => {
@@ -87,7 +91,7 @@ export default function App() {
     window.addEventListener('online', online); window.addEventListener('offline', offline);
     const t = setInterval(() => api.system.internet().then((o) => appStore.set({ online: o })).catch(() => undefined), 60000);
     api.system.internet().then((o) => appStore.set({ online: o })).catch(() => undefined);
-    const off = api.on('tv:foreground', () => window.focus());
+    const off = api.on('tv:foreground', () => { window.focus(); cancelSplash(); play('wake'); });
     return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); clearInterval(t); off(); };
   }, []);
 
@@ -100,6 +104,11 @@ export default function App() {
     r.classList.toggle('no-fx', !settings.animatedBackground);
     document.title = 'MY SMART TV';
   }, [settings.theme, settings.uiScale, settings.overscan, settings.animatedBackground]);
+
+  // UI sound settings + startup chime (once, after the first screen is ready)
+  useEffect(() => { configureSfx({ enabled: settings.uiSounds, volume: settings.uiSoundVolume, sink: settings.audioDeviceId }); }, [settings.uiSounds, settings.uiSoundVolume, settings.audioDeviceId]);
+  const chimed = useRef(false);
+  useEffect(() => { if (loaded && !chimed.current) { chimed.current = true; setTimeout(() => play('startup'), 700); } }, [loaded]);
 
   // setup wizard completed/restarted → re-evaluate
   useEffect(() => { if (loaded) setNeedSetup(!settings.setupDone); }, [loaded, settings.setupDone]);
@@ -137,6 +146,7 @@ export default function App() {
       {gate && <PinPrompt title="Parental PIN to leave Kids profile" onClose={() => setGate(false)} onVerify={async (p) => { if (await api.parental.verify(p)) { setGate(false); await reloadProfiles(); setPicking(true); return true; } return false; }} />}
       {power && <PowerMenu onClose={() => setPower(false)} onProfile={switchProfile} />}
       <FocusGlow />
+      <Splash />
       <PlayerHost />
       <Screensaver />
       <Toasts />

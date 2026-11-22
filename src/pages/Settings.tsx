@@ -9,6 +9,7 @@ import { ProfileEditor } from '../components/Profiles';
 import { PageScroll } from '../components/content';
 import { setSleepTimer } from '../lib/sleep';
 import { previewScreensaver } from '../components/Screensaver';
+import { play } from '../lib/sfx';
 import { fmtBytes } from '../lib/format';
 import { Header } from './Titles';
 import type { Profile } from '../../shared/types';
@@ -60,6 +61,9 @@ function General() {
       <ChoiceRow label="Theme" value={s.theme} onChange={(v) => updateSettings({ theme: v })} options={[{ value: 'cinematic', label: 'Cinematic (purple & blue)' }, { value: 'midnight', label: 'Midnight blue' }, { value: 'oled', label: 'OLED black' }]} />
       <ChoiceRow label="Language" desc="Applies to movie/series metadata and the navigation bar. Other screens are English." value={s.language} onChange={(v) => updateSettings({ language: v })} options={[{ value: 'en', label: 'English' }, { value: 'ms', label: 'Bahasa Melayu' }, { value: 'zh', label: '中文' }, { value: 'ta', label: 'தமிழ்' }]} />
       <ToggleRow label="Animated backgrounds & effects" desc="Floating light particles, focus glow and shine effects. Turn off on slow PCs. They pause automatically during video and games." value={s.animatedBackground} onChange={(v) => updateSettings({ animatedBackground: v })} />
+      <ToggleRow label="Sound effects" desc="Soft sounds when you move, select and go back, plus the startup chime and app launch whoosh." value={s.uiSounds} onChange={(v) => { updateSettings({ uiSounds: v }); if (v) setTimeout(() => play('select'), 80); }} />
+      <SliderRow label="Sound effects volume" value={s.uiSoundVolume} min={0.1} max={1} step={0.1} fmt={(v) => `${Math.round(v * 100)}%`} onChange={(v) => { updateSettings({ uiSoundVolume: v }); setTimeout(() => play('select'), 80); }} />
+      <ToggleRow label="App launch splash screen" desc="An animated splash in the app's colours (with sound) while Netflix, Nebula, YouTube and other apps open. Press Back to cancel." value={s.launchSplash} onChange={(v) => updateSettings({ launchSplash: v })} />
       <SettingRow label="Home screen rows" desc="Choose which rows appear on Home and their order." right="Customize ›" onSelect={() => setRows(true)} />
       <SectionTitle>Startup</SectionTitle>
       <ToggleRow label="Start with Windows (TV mode)" desc="Launch MY SMART TV full screen when you sign in to Windows. Works in the installed app." value={s.autoStart} onChange={(v) => updateSettings({ autoStart: v })} />

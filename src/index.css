@@ -88,3 +88,26 @@ html.no-fx .f-card::after { display: none; }
 .hscroll { display: flex; overflow-x: auto; overflow-y: visible; scroll-behavior: smooth; scroll-snap-type: none; }
 .vscroll { overflow-y: auto; scroll-behavior: smooth; }
 input[type='range'] { accent-color: var(--purple); }
+
+/* ----- launch splash ----- */
+@keyframes splashIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes splashPop { 0% { opacity: 0; transform: scale(0.35) rotate(-8deg); } 55% { opacity: 1; transform: scale(1.12) rotate(1deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes splashRipple { 0% { opacity: 0.7; transform: scale(0.55); } 100% { opacity: 0; transform: scale(1.9); } }
+@keyframes splashSpin { to { transform: rotate(360deg); } }
+@keyframes splashStreak { 0% { opacity: 0; clip-path: inset(0 100% 0 0); margin-left: 5rem; } 30% { opacity: 1; } 100% { opacity: 0; clip-path: inset(0 0 0 0); margin-left: 40rem; } }
+@keyframes splashSpark { 0%, 100% { opacity: 0; transform: scale(0.3); } 50% { opacity: 0.9; transform: scale(1); } }
+@keyframes splashBar { from { width: 0; } to { width: 100%; } }
+@keyframes splashRise { from { opacity: 0; transform: translateY(1.6rem); letter-spacing: 0.3em; } to { opacity: 1; transform: none; } }
+@keyframes splashBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+.splash-root { animation: splashIn 0.35s ease both; }
+.splash-bg { animation: splashBreathe 3.4s ease-in-out infinite; }
+.splash-bg2 { animation: splashSpin 14s linear infinite; opacity: 0.8; }
+.splash-logo { animation: splashPop 0.8s cubic-bezier(0.2, 0.9, 0.25, 1.2) 0.1s both; }
+.splash-ring { animation: splashSpin 1.8s linear infinite; }
+.splash-ripple { animation: splashRipple 2.2s ease-out infinite; }
+.splash-spark { animation: splashSpark 2s ease-in-out infinite; box-shadow: 0 0 0.8rem #fff; }
+.splash-streak { animation: splashStreak 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) infinite; opacity: 0; }
+.splash-bar { animation: splashBar 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.splash-title { animation: splashRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s both; }
+.splash-chip { animation: glowPulse 2s ease-in-out infinite; }
+.splash-shine { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 48%, transparent 66%); transform: translateX(-130%); animation: shine 1.3s ease 0.7s 2 both; }

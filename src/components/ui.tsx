@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { play } from '../lib/sfx';
 import { pushScope, popScope, registerElementKeys, useKeys, type KeyEv } from '../lib/nav';
 
 // ---------- Focusable ----------
@@ -115,7 +116,7 @@ export function Pill({ children, active, onSelect, fk, autoFocus }: { children: 
 // ---------- Modal ----------
 export function Modal({ title, children, onClose, width = 52, footer }: { title?: string; children: ReactNode; onClose: () => void; width?: number; footer?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { const el = ref.current!; pushScope(el); return () => popScope(el); }, []);
+  useEffect(() => { const el = ref.current!; pushScope(el); play('open'); return () => popScope(el); }, []);
   useKeys((e) => { if (e.k === 'back' || e.k === 'backspace') { onClose(); return true; } }, true);
   return createPortal(
     <div ref={ref} className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in">

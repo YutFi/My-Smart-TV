@@ -5,9 +5,11 @@ import { Button, Card, EmptyState, Loading, Row } from '../components/ui';
 import { TextField } from '../components/osk';
 import { ListItemCard, PageScroll, openYoutubeVideo } from '../components/content';
 import { Header } from './Titles';
+import { launchWithSplash } from '../lib/splash';
 
 async function openYt(url: string, tv = false) {
-  const r = await api.launch.url(url, { tv, label: 'YouTube' });
+  const r = await launchWithSplash({ title: 'YouTube', text: 'YouTube', color: '#ff0033', color2: '#8a0019' }, () => api.launch.url(url, { tv, label: 'YouTube' }));
+  if (r.error === 'cancelled') return;
   if (!r.ok) toast(r.error || 'Could not open YouTube', 'error');
   else toast('Opening YouTube… press Ctrl+Alt+H or the remote’s Home key to return', 'info', 5000);
 }

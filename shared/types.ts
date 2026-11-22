@@ -39,6 +39,9 @@ export interface Settings {
   screensaverMinutes: number; // 0 = off
   screensaverStyle: 'auto' | 'aurora' | 'stars' | 'bokeh' | 'waves' | 'grid' | 'artwork';
   gamingMode: boolean;
+  uiSounds: boolean;
+  uiSoundVolume: number;
+  launchSplash: boolean;
   nebulaMode: 'desktop' | 'web';
   animatedBackground: boolean;
   sleepAction: 'stop' | 'sleep-pc';
@@ -85,6 +88,9 @@ export const DEFAULT_SETTINGS: Settings = {
   screensaverMinutes: 5,
   screensaverStyle: 'auto',
   gamingMode: true,
+  uiSounds: true,
+  uiSoundVolume: 0.6,
+  launchSplash: true,
   nebulaMode: 'desktop',
   animatedBackground: true,
   sleepAction: 'stop',

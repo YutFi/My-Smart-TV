@@ -4,6 +4,7 @@ import { api, type Game, type Title } from '../lib/api';
 import { channelRequest, localRequest, nav, pid, playMedia, toast } from '../lib/app';
 import { STREAMING_APPS, type HistoryItem, type ListItem } from '../../shared/types';
 import { fmtClock, fmtDay } from '../lib/format';
+import { launchWithSplash } from '../lib/splash';
 
 export const openTitle = (t: { kind: 'movie' | 'tv'; id: number }) => nav.push('title', { kind: t.kind, id: t.id });
 
@@ -11,9 +12,13 @@ export function TitleCard({ t, fk, shape = 'poster', progress }: { t: Title; fk:
   return <Card fk={fk} title={t.title} sub={`${t.year || ''}${t.rating ? ` · ★ ${t.rating}` : ''}`} image={shape === 'wide' ? t.backdrop || t.poster : t.poster} shape={shape} progress={progress} onSelect={() => openTitle(t)} />;
 }
 
+const hueOf = (s: string) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; };
+export const splashColors = (name: string) => { const h = hueOf(name); return { color: `hsl(${h} 70% 50%)`, color2: `hsl(${(h + 40) % 360} 75% 22%)` }; };
+
 export async function launchApp(id: string) {
-  const r = await api.launch.app(pid(), id);
   const a = STREAMING_APPS.find((x) => x.id === id);
+  const r = await launchWithSplash({ title: a?.name || id, text: a?.text, color: a?.color || '#8b5cf6', color2: a?.color2 || '#1e1b4b', gaming: a?.gaming }, () => api.launch.app(pid(), id));
+  if (r.error === 'cancelled') return;
   if (!r.ok) toast(r.error || 'Could not open the app', 'error');
   else if (a?.gaming) toast(`Opening ${a.name} — gaming mode on. Click ⌂ MY SMART TV (top-left) to come back`, 'info', 6000);
   else toast(`Opening ${a?.name}… click ⌂ MY SMART TV (top-left) or press Ctrl+Alt+H to come back`, 'info', 5000);
@@ -29,8 +34,8 @@ export function useNativeApps() {
 
 export async function openYoutubeVideo(v: { id: string; title: string; thumb: string }) {
   api.history.record(pid(), { kind: 'youtube', ref: v.id, title: v.title, image: v.thumb, sub: 'YouTube' }).catch(() => undefined);
-  const r = await api.launch.url(`https://www.youtube.com/watch?v=${v.id}`, { label: 'YouTube' });
-  if (!r.ok) toast(r.error || 'Could not open YouTube', 'error');
+  const r = await launchWithSplash({ title: 'YouTube', text: 'YouTube', color: '#ff0033', color2: '#8a0019' }, () => api.launch.url(`https://www.youtube.com/watch?v=${v.id}`, { label: 'YouTube' }));
+  if (!r.ok && r.error !== 'cancelled') toast(r.error || 'Could not open YouTube', 'error');
 }
 
 // Open any saved item (history / favorites / watchlist) by its kind.
@@ -56,14 +61,16 @@ export async function openListItem(it: ListItem | HistoryItem, resume = true) {
     case 'team': nav.go('sports'); return;
     case 'exe': {
       api.launch.addRecent(pid(), `exe:${it.ref}`).catch(() => undefined);
-      const r = await api.launch.exe(it.ref, it.title);
+      const r = await launchWithSplash({ title: it.title, gaming: true, ...splashColors(it.title) }, () => api.launch.exe(it.ref, it.title));
+      if (r.error === 'cancelled') return;
       if (!r.ok) toast(r.error || 'Could not start the program', 'error');
       else toast(`Opening ${it.title} — gaming mode on. Click ⌂ MY SMART TV (top-left) to come back`, 'info', 6000);
       return;
     }
     case 'site': {
       api.launch.addRecent(pid(), `site:${it.ref}`).catch(() => undefined);
-      const r = await api.launch.url(it.ref, { label: it.title });
+      const r = await launchWithSplash({ title: it.title, ...splashColors(it.title) }, () => api.launch.url(it.ref, { label: it.title }));
+      if (r.error === 'cancelled') return;
       if (!r.ok) toast(r.error || 'Could not open the website', 'error');
       else toast(`Opening ${it.title}… use the ⌂ MY SMART TV button (top-left) to come back`, 'info', 5000);
       return;
