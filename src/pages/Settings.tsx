@@ -59,6 +59,7 @@ function General() {
       <SectionTitle>Appearance</SectionTitle>
       <ChoiceRow label="Theme" value={s.theme} onChange={(v) => updateSettings({ theme: v })} options={[{ value: 'cinematic', label: 'Cinematic (purple & blue)' }, { value: 'midnight', label: 'Midnight blue' }, { value: 'oled', label: 'OLED black' }]} />
       <ChoiceRow label="Language" desc="Applies to movie/series metadata and the navigation bar. Other screens are English." value={s.language} onChange={(v) => updateSettings({ language: v })} options={[{ value: 'en', label: 'English' }, { value: 'ms', label: 'Bahasa Melayu' }, { value: 'zh', label: '中文' }, { value: 'ta', label: 'தமிழ்' }]} />
+      <ToggleRow label="Animated backgrounds & effects" desc="Floating light particles, focus glow and shine effects. Turn off on slow PCs. They pause automatically during video and games." value={s.animatedBackground} onChange={(v) => updateSettings({ animatedBackground: v })} />
       <SettingRow label="Home screen rows" desc="Choose which rows appear on Home and their order." right="Customize ›" onSelect={() => setRows(true)} />
       <SectionTitle>Startup</SectionTitle>
       <ToggleRow label="Start with Windows (TV mode)" desc="Launch MY SMART TV full screen when you sign in to Windows. Works in the installed app." value={s.autoStart} onChange={(v) => updateSettings({ autoStart: v })} />
@@ -66,11 +67,12 @@ function General() {
       <ToggleRow label="Restore last screen" desc="Reopen the section you were using." value={s.resumeLastRoute} onChange={(v) => updateSettings({ resumeLastRoute: v })} />
       <ToggleRow label="Resume last channel" desc="Start playing the last live channel automatically." value={s.resumeLastChannel} onChange={(v) => updateSettings({ resumeLastChannel: v })} />
       <ToggleRow label="Ask “Who’s watching?” at start" value={s.askProfileOnStart} onChange={(v) => updateSettings({ askProfileOnStart: v })} />
-      <SectionTitle>Power</SectionTitle>
+      <SectionTitle>Gaming & power</SectionTitle>
+      <ToggleRow label="Gaming mode (Nebula & Windows games)" desc="When you open Nebula or a Windows game from MY SMART TV: switches Windows to the High performance power plan (restored afterwards), keeps the screen awake, and makes MY SMART TV use almost no CPU/GPU in the background." value={s.gamingMode} onChange={(v) => updateSettings({ gamingMode: v })} />
       <SettingRow label="Sleep timer" desc="Stop playback after a set time." right="Set ›" onSelect={() => setSleep(true)} />
       <ChoiceRow label="When the sleep timer ends" value={s.sleepAction} onChange={(v) => updateSettings({ sleepAction: v })} options={[{ value: 'stop', label: 'Stop playback' }, { value: 'sleep-pc', label: 'Stop and put the PC to sleep' }]} />
       <ChoiceRow label="Screensaver starts after" desc="Animated ambient scenes appear after inactivity when nothing is playing." value={s.screensaverMinutes} onChange={(v) => updateSettings({ screensaverMinutes: v })} options={[{ value: 0, label: 'Never' }, { value: 1, label: '1 minute' }, { value: 3, label: '3 minutes' }, { value: 5, label: '5 minutes' }, { value: 10, label: '10 minutes' }, { value: 20, label: '20 minutes' }]} />
-      <ChoiceRow label="Screensaver style" value={s.screensaverStyle} onChange={(v) => updateSettings({ screensaverStyle: v })} options={[{ value: 'auto', label: 'Auto (rotates all scenes)' }, { value: 'aurora', label: 'Aurora lights' }, { value: 'stars', label: 'Starfield' }, { value: 'bokeh', label: 'Floating lights' }, { value: 'waves', label: 'Moonlit waves' }, { value: 'artwork', label: 'Movie artwork (needs TMDB key)' }]} />
+      <ChoiceRow label="Screensaver style" value={s.screensaverStyle} onChange={(v) => updateSettings({ screensaverStyle: v })} options={[{ value: 'auto', label: 'Auto (rotates all scenes)' }, { value: 'aurora', label: 'Aurora lights' }, { value: 'stars', label: 'Starfield' }, { value: 'bokeh', label: 'Floating lights' }, { value: 'waves', label: 'Moonlit waves' }, { value: 'grid', label: 'Neon horizon' }, { value: 'artwork', label: 'Movie artwork (needs TMDB key)' }]} />
       <SettingRow label="Preview screensaver" desc="Press any key to exit the preview." right="▶ Preview" onSelect={() => previewScreensaver()} />
       {rows && <HomeRows onClose={() => setRows(false)} />}
       {sleep && (

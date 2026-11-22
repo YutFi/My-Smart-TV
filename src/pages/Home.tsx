@@ -129,12 +129,12 @@ function AppsRow() {
   const entries: Entry[] = [];
   const seen = new Set<string>();
   const push = (e: Entry) => { if (!seen.has(e.key)) { seen.add(e.key); entries.push(e); } };
-  const siteByRef = new Map((data?.sites || []).map((s) => [`site:${s.ref}`, s]));
+  const siteByRef = new Map((data?.sites || []).map((s) => [`${s.kind}:${s.ref}`, s]));
   for (const id of data?.recents || []) { const a = STREAMING_APPS.find((x) => x.id === id); if (a) push({ key: a.id, app: a }); else if (siteByRef.has(id)) push({ key: id, site: siteByRef.get(id) }); }
-  for (const s of data?.sites || []) push({ key: `site:${s.ref}`, site: s });
+  for (const s of data?.sites || []) push({ key: `${s.kind}:${s.ref}`, site: s });
   for (const a of STREAMING_APPS) push({ key: a.id, app: a });
   return (
-    <Row title="Apps & Websites" subtitle={data?.recents.length ? 'Recently opened first' : data?.sites.length ? 'Including your websites' : undefined}>
+    <Row title="Apps & Websites" subtitle={data?.recents.length ? 'Recently opened first' : data?.sites.length ? 'Including your websites and Windows apps' : undefined}>
       {entries.map((e) => (e.app ? <AppTile key={e.key} app={e.app} fk={`app:${e.key}`} /> : <SiteTile key={e.key} it={e.site!} fk={`app:${e.key}`} />))}
       <SetupCard fk="app:add" icon="＋" title="Add a website" text="Put any streaming site or web app on your Home screen." action="Open Apps" onSelect={() => nav.go('apps')} />
     </Row>

@@ -10,6 +10,7 @@ import { bringTvToFront } from './services/launcher';
 import { refreshAll } from './services/iptv';
 import { broadcast } from './services/bus';
 import { streamHeaders } from './services/stream';
+import { exit as exitGaming, restoreAfterCrash } from './services/gaming';
 
 const isDev = !app.isPackaged;
 const args = process.argv;
@@ -158,6 +159,7 @@ if (!loadSettings().hwAccel) app.disableHardwareAcceleration();
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   log.info(`Starting MY SMART TV ${app.getVersion()} (tvMode=${tvMode}, packaged=${app.isPackaged}, electron ${process.versions.electron})`);
+  void restoreAfterCrash();
   installNetworkHooks();
   registerIpc({ applyDisplay, setDesktopMode });
   createWindow();
@@ -180,6 +182,6 @@ app.whenReady().then(async () => {
 });
 
 app.on('window-all-closed', () => { app.quit(); });
-app.on('will-quit', () => { globalShortcut.unregisterAll(); closeDb(); });
+app.on('will-quit', () => { globalShortcut.unregisterAll(); void exitGaming(); closeDb(); });
 process.on('uncaughtException', (e) => log.error('uncaughtException', e));
 process.on('unhandledRejection', (e) => log.error('unhandledRejection', e as any));

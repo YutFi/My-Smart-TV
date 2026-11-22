@@ -26,6 +26,7 @@ export function Hero({ slides, extra }: { slides: HeroSlide[]; extra?: ReactNode
         </div>
       ))}
       <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent" />
+      <div className="hero-sweep" />
       <div key={s.id} className="page-enter absolute bottom-[2.6rem] left-[3.5rem] max-w-[52rem]">
         {s.tag && <div className="mb-[0.6rem] inline-block rounded-md bg-accent-purple/80 px-[0.7rem] py-[0.15rem] text-[0.95rem] font-bold uppercase tracking-widest">{s.tag}</div>}
         <h1 className="text-[3.6rem] font-black leading-[1.05] tracking-tight text-shadow">{s.title}</h1>

@@ -13,8 +13,8 @@ import { fmtClock } from '../lib/format';
 const previewStore = createStore<{ on: boolean; ignoreUntil: number }>({ on: false, ignoreUntil: 0 });
 export const previewScreensaver = () => previewStore.set({ on: true, ignoreUntil: Date.now() + 1800 });
 
-type SceneName = 'aurora' | 'stars' | 'bokeh' | 'waves';
-const SCENES: SceneName[] = ['aurora', 'stars', 'bokeh', 'waves'];
+type SceneName = 'aurora' | 'stars' | 'bokeh' | 'waves' | 'grid';
+const SCENES: SceneName[] = ['aurora', 'grid', 'stars', 'bokeh', 'waves'];
 
 interface Scene { draw(ctx: CanvasRenderingContext2D, w: number, h: number, t: number, dt: number): void }
 
@@ -125,7 +125,52 @@ function makeWaves(): Scene {
   };
 }
 
-const FACTORY: Record<SceneName, () => Scene> = { aurora: makeAurora, stars: makeStars, bokeh: makeBokeh, waves: makeWaves };
+// Neon "synthwave" horizon: striped sun, starry sky and a perspective grid rushing toward the viewer.
+function makeGrid(): Scene {
+  const stars = Array.from({ length: 120 }, () => ({ x: Math.random(), y: Math.random() * 0.5, r: rnd(0.4, 1.3), p: rnd(0, 6.28), s: rnd(0.6, 2) }));
+  return {
+    draw(ctx, w, h, t) {
+      const hy = h * 0.58;
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      const sky = ctx.createLinearGradient(0, 0, 0, hy); sky.addColorStop(0, '#05021a'); sky.addColorStop(0.6, '#240a4e'); sky.addColorStop(1, '#8a1d7e');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, w, hy);
+      for (const s of stars) { ctx.globalAlpha = 0.3 + 0.7 * (0.5 + 0.5 * Math.sin(t * s.s + s.p)); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s.x * w, s.y * h, s.r, 0, 6.28); ctx.fill(); }
+      ctx.globalAlpha = 1;
+      // sun with cut-out stripes in its lower half
+      const cx = w / 2; const r = h * 0.2; const cy = hy - r * 0.15;
+      const halo = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 2.4); halo.addColorStop(0, 'rgba(255,80,170,0.45)'); halo.addColorStop(1, 'rgba(255,80,170,0)');
+      ctx.fillStyle = halo; ctx.fillRect(0, 0, w, hy);
+      const sg = ctx.createLinearGradient(0, cy - r, 0, cy + r); sg.addColorStop(0, '#ffe27a'); sg.addColorStop(0.55, '#ff7a59'); sg.addColorStop(1, '#ff2f92');
+      ctx.fillStyle = sg;
+      const slices = 44;
+      for (let i = 0; i < slices; i++) {
+        const y0 = cy - r + (i / slices) * 2 * r; const y1 = cy - r + ((i + 1) / slices) * 2 * r; const f = i / slices;
+        if (f > 0.5 && ((i + Math.floor(t * 2)) % 5 < 2 + Math.floor((f - 0.5) * 6))) continue; // stripes, slowly crawling
+        const ym = (y0 + y1) / 2; const half = Math.sqrt(Math.max(0, r * r - (ym - cy) * (ym - cy)));
+        if (y0 > hy) continue;
+        ctx.fillRect(cx - half, y0, half * 2, Math.min(y1, hy) - y0 + 0.5);
+      }
+      const ground = ctx.createLinearGradient(0, hy, 0, h); ground.addColorStop(0, '#1b0638'); ground.addColorStop(1, '#04010e');
+      ctx.fillStyle = ground; ctx.fillRect(0, hy, w, h - hy);
+      ctx.globalCompositeOperation = 'lighter';
+      // vertical (converging) lines
+      for (let i = -24; i <= 24; i++) {
+        ctx.strokeStyle = 'rgba(255,60,200,0.16)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + i * w * 0.012, hy); ctx.lineTo(cx + i * w * 0.14, h); ctx.stroke();
+        ctx.strokeStyle = 'rgba(120,220,255,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+      }
+      // horizontal lines moving toward us
+      const N = 16; const off = (t * 0.35) % 1;
+      for (let k = 0; k < N; k++) {
+        const z = (k + off) / N; const y = hy + (h - hy) * Math.pow(z, 2.4);
+        ctx.strokeStyle = `rgba(255,60,200,${0.1 + z * 0.2})`; ctx.lineWidth = 2 + z * 4; ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        ctx.strokeStyle = `rgba(120,220,255,${0.25 + z * 0.5})`; ctx.lineWidth = 0.8 + z * 1.2; ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'source-over';
+    },
+  };
+}
+
+const FACTORY: Record<SceneName, () => Scene> = { aurora: makeAurora, stars: makeStars, bokeh: makeBokeh, waves: makeWaves, grid: makeGrid };
 
 function Canvas({ scene, dim }: { scene: SceneName; dim: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -180,7 +225,7 @@ export function Screensaver() {
 
   if (!active) return null;
   const haveArt = imgs.length > 0;
-  const order: (SceneName | 'art')[] = haveArt && (style === 'auto') ? ['aurora', 'art', 'stars', 'bokeh', 'art', 'waves'] : SCENES;
+  const order: (SceneName | 'art')[] = haveArt && (style === 'auto') ? ['aurora', 'art', 'grid', 'stars', 'bokeh', 'art', 'waves'] : SCENES;
   const scene: SceneName | 'art' = style === 'auto' ? order[tick % order.length] : style === 'artwork' ? (haveArt ? 'art' : 'aurora') : (style as SceneName);
   const img = imgs.length ? imgs[tick % imgs.length] : '';
   const spots = [{ left: '7%', top: '9%' }, { right: '7%', bottom: '11%' }, { left: '8%', bottom: '12%' }, { right: '8%', top: '10%' }, { left: '34%', top: '38%' }];

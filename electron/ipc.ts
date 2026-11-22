@@ -149,6 +149,13 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openDirectory'], title: 'Choose a media folder (USB drives and network shares included)' });
     return r.canceled ? null : r.filePaths[0];
   });
+  handle('dialog:program', async (e) => {
+    const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openFile'], title: 'Choose a Windows program or shortcut', defaultPath: 'C:\\Program Files', filters: [{ name: 'Programs & shortcuts', extensions: ['exe', 'lnk'] }] });
+    if (r.canceled || !r.filePaths[0]) return null;
+    let p = r.filePaths[0];
+    if (/\.lnk$/i.test(p)) { try { p = shell.readShortcutLink(p).target || p; } catch { /* keep */ } }
+    return /\.exe$/i.test(p) ? p : null;
+  });
   handle('dialog:file', async (e, kind: 'playlist' | 'media' | 'subtitle') => {
     const filters = kind === 'playlist' ? [{ name: 'Playlists', extensions: ['m3u', 'm3u8', 'gz'] }] : kind === 'subtitle' ? [{ name: 'Subtitles', extensions: ['srt', 'vtt'] }] : [{ name: 'Media', extensions: ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'mp3', 'aac', 'flac', 'm4v', 'webm', 'm3u8'] }];
     const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openFile'], filters });
@@ -199,13 +206,28 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
 
   // ---------- launching ----------
   handle('launch:url', (_e, url: string, opts) => launcher.launchUrl(url, opts));
-  handle('launch:app', (_e, pid: number, appId: string) => {
+  handle('launch:app', async (_e, pid: number, appId: string) => {
     const a = STREAMING_APPS.find((x) => x.id === appId);
     if (!a) throw new Error('Unknown app');
     run('INSERT INTO recent_apps(profile_id,app_id,opened) VALUES (?,?,?) ON CONFLICT(profile_id,app_id) DO UPDATE SET opened=excluded.opened', pid, appId, Date.now());
     if (a.protocol && launcher.launchProtocol(a.protocol)) return { ok: true, via: 'app' };
-    return { ...launcher.launchUrl(a.url, { tv: a.tv && false, label: a.name }), via: 'browser' };
+    const found = (a.exe || []).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
+    if (found) return { ...(await launcher.launchNative(found, { label: a.name, gaming: a.gaming })), via: 'desktop' };
+    return { ...launcher.launchUrl(a.url, { tv: a.tv && false, label: a.name, gaming: a.gaming }), via: 'browser' };
   });
+  // Windows programs the user added (or built-in apps with a desktop client): launched natively, gaming mode applied.
+  handle('launch:exe', (_e, p: string, label: string) => launcher.launchNative(String(p), { label, gaming: true }));
+  handle('apps:native', async () => {
+    const out: Record<string, { path: string; icon: string }> = {};
+    for (const a of STREAMING_APPS) {
+      const found = (a.exe || []).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
+      if (!found) continue;
+      let icon = ''; try { icon = (await app.getFileIcon(found, { size: 'large' })).toDataURL(); } catch { /* no icon */ }
+      out[a.id] = { path: found, icon };
+    }
+    return out;
+  });
+  handle('apps:icon', async (_e, p: string) => { try { return (await app.getFileIcon(String(p), { size: 'large' })).toDataURL(); } catch { return ''; } });
   handle('launch:vlc', (_e, target: string) => launcher.openInVlc(target));
   handle('launch:browserSetup', (_e, url: string) => launcher.openBrowserSetup(url));
   handle('launch:home', () => launcher.bringTvToFront('manual'));

@@ -6,6 +6,7 @@ import { loadSettings } from '../db';
 import { log } from './log';
 import { broadcast } from './bus';
 import { getTargetDisplay } from './system';
+import { enter as enterGaming, exit as exitGaming } from './gaming';
 
 // Streaming services rely on Widevine DRM, which stock Electron does not ship. So official sites/apps are opened in the
 // PC's own Edge/Chrome (which has Widevine) in a fullscreen app window with a dedicated profile. DRM is never bypassed.
@@ -67,8 +68,12 @@ function hideReturnButton() {
   returnWin = null;
 }
 
+let nativeWatch: NodeJS.Timeout | null = null;
+
 export function bringTvToFront(reason = '') {
   hideReturnButton();
+  if (nativeWatch) { clearInterval(nativeWatch); nativeWatch = null; }
+  void exitGaming();
   const w = getMainWindow();
   if (child && child.pid) {
     const pid = child.pid;
@@ -85,7 +90,33 @@ export function bringTvToFront(reason = '') {
   }
 }
 
-export function launchUrl(url: string, opts: { tv?: boolean; label?: string } = {}): { ok: boolean; error?: string } {
+// Launch an installed Windows program (e.g. the Nebula desktop client). ShellExecute is used so programs that need
+// elevation show Windows' normal prompt. MY SMART TV steps aside and returns when the program's process ends.
+export async function launchNative(exe: string, opts: { label?: string; gaming?: boolean } = {}): Promise<{ ok: boolean; error?: string }> {
+  if (!/\.exe$/i.test(exe) || !fs.existsSync(exe)) return { ok: false, error: `Program not found: ${exe}` };
+  if (child && child.pid) { execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], () => undefined); child = null; }
+  if (nativeWatch) { clearInterval(nativeWatch); nativeWatch = null; }
+  const err = await shell.openPath(exe);
+  if (err) { log.error(`Could not start ${exe}: ${err}`); return { ok: false, error: err }; }
+  log.info(`Launched ${opts.label || exe}`);
+  if (opts.gaming) await enterGaming(opts.label || path.basename(exe));
+  const name = path.basename(exe);
+  const w = getMainWindow();
+  setTimeout(() => { if (w && !w.isDestroyed()) w.minimize(); }, 1200);
+  showReturnButton();
+  const started = Date.now(); let seen = false; let misses = 0;
+  nativeWatch = setInterval(() => {
+    execFile('tasklist', ['/FI', `IMAGENAME eq ${name}`, '/NH', '/FO', 'CSV'], { windowsHide: true }, (e, out) => {
+      const running = !e && String(out).toLowerCase().includes(name.toLowerCase());
+      if (running) { seen = true; misses = 0; return; }
+      misses++;
+      if ((seen && misses >= 2) || (!seen && Date.now() - started > 60000)) bringTvToFront('program-exit');
+    });
+  }, 3000);
+  return { ok: true };
+}
+
+export function launchUrl(url: string, opts: { tv?: boolean; label?: string; gaming?: boolean } = {}): { ok: boolean; error?: string } {
   if (!/^https?:\/\//i.test(url)) return { ok: false, error: 'Only http(s) addresses can be opened.' };
   const exe = pickBrowser();
   if (!exe) {
@@ -112,6 +143,7 @@ export function launchUrl(url: string, opts: { tv?: boolean; label?: string } = 
     // let the browser take the screen, keep MY SMART TV alive in the background
     setTimeout(() => { if (w && !w.isDestroyed() && child) w.minimize(); }, 900);
     showReturnButton();
+    if (opts.gaming) void enterGaming(opts.label || url);
     log.info(`Launched ${childLabel} via ${path.basename(exe)}`);
     return { ok: true };
   } catch (e: any) {

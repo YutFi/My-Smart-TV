@@ -37,7 +37,9 @@ export interface Settings {
   browser: 'auto' | 'edge' | 'chrome' | 'default';
   // smart
   screensaverMinutes: number; // 0 = off
-  screensaverStyle: 'auto' | 'aurora' | 'stars' | 'bokeh' | 'waves' | 'artwork';
+  screensaverStyle: 'auto' | 'aurora' | 'stars' | 'bokeh' | 'waves' | 'grid' | 'artwork';
+  gamingMode: boolean;
+  animatedBackground: boolean;
   sleepAction: 'stop' | 'sleep-pc';
   // parental
   parentalEnabled: boolean;
@@ -81,6 +83,8 @@ export const DEFAULT_SETTINGS: Settings = {
   browser: 'auto',
   screensaverMinutes: 5,
   screensaverStyle: 'auto',
+  gamingMode: true,
+  animatedBackground: true,
   sleepAction: 'stop',
   parentalEnabled: false,
   lastRoute: 'home',
@@ -207,12 +211,14 @@ export interface StreamingApp {
   color2: string;
   text: string; // wordmark
   protocol?: string; // optional Windows protocol handler
+  exe?: string[]; // installed desktop client locations (launched natively when found)
+  gaming?: boolean; // run gaming mode while it is open
   tv?: boolean; // supports TV UI
   note?: string;
 }
 
 export const STREAMING_APPS: StreamingApp[] = [
-  { id: 'nebula', name: 'Nebula Cloud Gaming', url: 'https://nebula.my/', color: '#7c3aed', color2: '#0e7490', text: 'NEBULA', note: 'Cloud gaming (works with a PS4/DualShock controller in the browser)' },
+  { id: 'nebula', name: 'Nebula Cloud Gaming', url: 'https://nebula.my/', color: '#7c3aed', color2: '#0e7490', text: 'NEBULA', gaming: true, exe: ['C:\\Program Files\\Nebula Technologies\\Nebula Client\\bin\\Nebula.exe', 'C:\\Program Files (x86)\\Nebula Technologies\\Nebula Client\\bin\\Nebula.exe'], note: 'Cloud gaming client; opens the website if the desktop client is not installed' },
   { id: 'netflix', name: 'Netflix', url: 'https://www.netflix.com/browse', color: '#e50914', color2: '#7a0309', text: 'NETFLIX' },
   { id: 'youtube', name: 'YouTube', url: 'https://www.youtube.com/', color: '#ff0033', color2: '#8a0019', text: 'YouTube', tv: true },
   { id: 'disney', name: 'Disney+', url: 'https://www.disneyplus.com/', color: '#1a3cff', color2: '#0b1d80', text: 'Disney+' },

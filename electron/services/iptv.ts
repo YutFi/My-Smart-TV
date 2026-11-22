@@ -5,6 +5,7 @@ import { fetchBuffer, broadcast, yieldLoop } from './bus';
 import { parseM3U } from './m3u';
 import { parseXmltv } from './xmltv';
 import { log } from './log';
+import { isGaming } from './gaming';
 import type { Channel, Playlist, Programme } from '../../shared/types';
 
 function toText(buf: Buffer): string {
@@ -92,6 +93,7 @@ export async function refreshPlaylist(id: number): Promise<{ ok: boolean; count:
 }
 
 export async function refreshAll(onlyStale = false) {
+  if (onlyStale && isGaming()) return; // don't compete with a running game for CPU/network
   const hours = loadSettings().playlistRefreshHours;
   for (const p of all<any>('SELECT * FROM playlists WHERE auto_update=1')) {
     if (onlyStale && Date.now() - p.updated_at < hours * 3600_000) continue;

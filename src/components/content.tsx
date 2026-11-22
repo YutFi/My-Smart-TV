@@ -13,8 +13,18 @@ export function TitleCard({ t, fk, shape = 'poster', progress }: { t: Title; fk:
 
 export async function launchApp(id: string) {
   const r = await api.launch.app(pid(), id);
+  const a = STREAMING_APPS.find((x) => x.id === id);
   if (!r.ok) toast(r.error || 'Could not open the app', 'error');
-  else toast(`Opening ${STREAMING_APPS.find((a) => a.id === id)?.name}… press Ctrl+Alt+H or the remote’s Home key to come back`, 'info', 5000);
+  else if (a?.gaming) toast(`Opening ${a.name} — gaming mode on. Click ⌂ MY SMART TV (top-left) to come back`, 'info', 6000);
+  else toast(`Opening ${a?.name}… click ⌂ MY SMART TV (top-left) or press Ctrl+Alt+H to come back`, 'info', 5000);
+}
+
+// Desktop clients found on this PC (e.g. Nebula) with their real icons — looked up once.
+let nativePromise: Promise<Record<string, { path: string; icon: string }>> | null = null;
+export function useNativeApps() {
+  const [v, setV] = useState<Record<string, { path: string; icon: string }>>({});
+  useEffect(() => { nativePromise ||= api.launch.nativeApps().catch(() => ({})); nativePromise.then(setV); }, []);
+  return v;
 }
 
 export async function openYoutubeVideo(v: { id: string; title: string; thumb: string }) {
@@ -44,6 +54,13 @@ export async function openListItem(it: ListItem | HistoryItem, resume = true) {
     case 'youtube': openYoutubeVideo({ id: it.ref, title: it.title, thumb: it.image }); return;
     case 'station': playMedia({ type: 'audio', url: it.data?.url || it.ref, title: it.title, subtitle: it.sub, image: it.image, kind: 'station', ref: it.ref, isRadio: true, data: it.data }); return;
     case 'team': nav.go('sports'); return;
+    case 'exe': {
+      api.launch.addRecent(pid(), `exe:${it.ref}`).catch(() => undefined);
+      const r = await api.launch.exe(it.ref, it.title);
+      if (!r.ok) toast(r.error || 'Could not start the program', 'error');
+      else toast(`Opening ${it.title} — gaming mode on. Click ⌂ MY SMART TV (top-left) to come back`, 'info', 6000);
+      return;
+    }
     case 'site': {
       api.launch.addRecent(pid(), `site:${it.ref}`).catch(() => undefined);
       const r = await api.launch.url(it.ref, { label: it.title });
@@ -62,10 +79,13 @@ export function ListItemCard({ it, fk, shape, progress }: { it: ListItem | Histo
 }
 
 export function AppTile({ app, fk, autoFocus }: { app: (typeof STREAMING_APPS)[number]; fk: string; autoFocus?: boolean }) {
+  const native = useNativeApps()[app.id];
   return (
     <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
-      <Focusable fk={fk} autoFocus={autoFocus} onSelect={() => launchApp(app.id)} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, ${app.color}, ${app.color2})` }}>
-        <span className="px-[0.6rem] text-center text-[1.75rem] font-black leading-none tracking-tight text-white drop-shadow-lg">{app.text}</span>
+      <Focusable fk={fk} autoFocus={autoFocus} onSelect={() => launchApp(app.id)} className="f-card relative flex items-center justify-center gap-[0.6rem] overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, ${app.color}, ${app.color2})` }}>
+        {native?.icon && <img src={native.icon} alt="" className="h-[3.2rem] w-[3.2rem] drop-shadow-lg" draggable={false} />}
+        <span className="px-[0.4rem] text-center text-[1.75rem] font-black leading-none tracking-tight text-white drop-shadow-lg">{app.text}</span>
+        {native && <span className="absolute left-[0.6rem] top-[0.5rem] rounded bg-black/45 px-[0.4rem] py-[0.05rem] text-[0.7rem] font-bold text-white/90">🖥 DESKTOP APP</span>}
         <span className="absolute bottom-[0.45rem] right-[0.7rem] text-[0.75rem] font-semibold text-white/70">{app.name}</span>
       </Focusable>
     </div>
@@ -75,12 +95,16 @@ export function AppTile({ app, fk, autoFocus }: { app: (typeof STREAMING_APPS)[n
 // Tile for a website the user added (Apps → Add a website). Same look as the app tiles, colored from the name.
 export function SiteTile({ it, fk, onKey }: { it: ListItem; fk: string; onKey?: (e: any) => boolean | void }) {
   let h = 0; for (let i = 0; i < it.title.length; i++) h = (h * 31 + it.title.charCodeAt(i)) % 360;
-  let host = ''; try { host = new URL(it.ref).host.replace(/^www\./, ''); } catch { /* ignore */ }
+  const isExe = it.kind === 'exe';
+  let host = ''; try { host = isExe ? 'Windows app' : new URL(it.ref).host.replace(/^www\./, ''); } catch { /* ignore */ }
+  const [icon, setIcon] = useState('');
+  useEffect(() => { if (isExe) api.launch.icon(it.ref).then(setIcon).catch(() => undefined); }, [isExe, it.ref]);
   return (
     <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
       <Focusable fk={fk} onSelect={() => openListItem(it)} onKey={onKey} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, hsl(${h} 65% 42%), hsl(${(h + 40) % 360} 70% 18%))` }}>
-        <span className="clamp-2 px-[0.8rem] text-center text-[1.6rem] font-black leading-tight tracking-tight text-white drop-shadow-lg">{it.title}</span>
-        <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">🌐 {host}</span>
+        {icon && <img src={icon} alt="" className="mr-[0.4rem] h-[3rem] w-[3rem] drop-shadow-lg" draggable={false} />}
+        <span className="clamp-2 px-[0.6rem] text-center text-[1.5rem] font-black leading-tight tracking-tight text-white drop-shadow-lg">{it.title}</span>
+        <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">{isExe ? '🖥' : '🌐'} {host}</span>
       </Focusable>
     </div>
   );
@@ -128,5 +152,5 @@ export function useWhen<T>(promise: () => Promise<T>, deps: any[] = []) {
 }
 
 export function PageScroll({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <main data-vscroll="" data-page="" className={`vscroll relative z-10 flex-1 pb-[6rem] ${className}`}>{children}</main>;
+  return <main data-vscroll="" data-page="" className={`vscroll fade-in relative z-10 flex-1 pb-[6rem] ${className}`}>{children}</main>;
 }

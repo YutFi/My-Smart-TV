@@ -5,6 +5,7 @@ import { initNav, setDefaultBack, setDefaultHome, useKeys } from './lib/nav';
 import { Background, TopNav, Toasts } from './components/Shell';
 import { PlayerHost } from './components/PlayerHost';
 import { Screensaver } from './components/Screensaver';
+import { FocusGlow } from './components/Effects';
 import { ProfilePicker } from './components/Profiles';
 import { PinPrompt } from './components/osk';
 import { Button, Modal } from './components/ui';
@@ -96,8 +97,9 @@ export default function App() {
     r.dataset.theme = settings.theme;
     r.style.setProperty('--ui', String(settings.uiScale));
     r.style.setProperty('--overscan', `${settings.overscan}%`);
+    r.classList.toggle('no-fx', !settings.animatedBackground);
     document.title = 'MY SMART TV';
-  }, [settings.theme, settings.uiScale, settings.overscan]);
+  }, [settings.theme, settings.uiScale, settings.overscan, settings.animatedBackground]);
 
   // setup wizard completed/restarted → re-evaluate
   useEffect(() => { if (loaded) setNeedSetup(!settings.setupDone); }, [loaded, settings.setupDone]);
@@ -134,6 +136,7 @@ export default function App() {
       {picking && <ProfilePicker canCancel onCancel={() => setPicking(false)} onDone={() => { setPicking(false); nav.go('home'); }} />}
       {gate && <PinPrompt title="Parental PIN to leave Kids profile" onClose={() => setGate(false)} onVerify={async (p) => { if (await api.parental.verify(p)) { setGate(false); await reloadProfiles(); setPicking(true); return true; } return false; }} />}
       {power && <PowerMenu onClose={() => setPower(false)} onProfile={switchProfile} />}
+      <FocusGlow />
       <PlayerHost />
       <Screensaver />
       <Toasts />

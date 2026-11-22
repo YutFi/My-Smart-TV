@@ -3,6 +3,7 @@ import { Focusable } from './ui';
 import { nav, useApp, useRoute, toastStore, TABS } from '../lib/app';
 import { useStore } from '../lib/store';
 import { fmtClock } from '../lib/format';
+import { AmbientBackground } from './Effects';
 
 const TAB_META: Record<string, { label: string; icon: string }> = {
   home: { label: 'HOME', icon: '🏠' }, live: { label: 'LIVE TV', icon: '📺' }, movies: { label: 'MOVIES', icon: '🎬' }, series: { label: 'SERIES', icon: '🎞️' },
@@ -69,5 +70,5 @@ export function Toasts() {
 }
 
 export function Background() {
-  return <div className="bg-cinema absolute inset-0"><div className="aurora"><i /><i /><i /></div></div>;
+  return <div className="bg-cinema absolute inset-0"><div className="aurora"><i /><i /><i /></div><AmbientBackground /></div>;
 }

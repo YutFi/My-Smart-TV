@@ -18,12 +18,21 @@ export function Apps() {
   return (
     <PageScroll>
       <Header title="Streaming Apps" subtitle="Opens the official service in full screen. Sign in once — your session is remembered." />
-      <div className="flex px-[3.5rem] pb-[0.6rem]"><Button primary autoFocus icon="＋" onSelect={() => setAdd(true)}>Add a website</Button></div>
+      <div className="flex gap-[0.8rem] px-[3.5rem] pb-[0.6rem]">
+        <Button primary autoFocus icon="＋" onSelect={() => setAdd(true)}>Add a website</Button>
+        <Button icon="🖥" onSelect={async () => {
+          const p = await api.launch.pickProgram();
+          if (!p) return;
+          const title = (p.split(/[\\/]/).pop() || 'Program').replace(/\.exe$/i, '');
+          await api.lists.toggle(pid(), 'sites', { kind: 'exe', ref: p, title, image: '' });
+          sites.reload(); toast(`${title} added — it also appears on Home`, 'ok');
+        }}>Add a Windows app / game</Button>
+      </div>
       {noBrowser &&<div className="mx-[3.5rem] mb-[0.8rem] rounded-xl bg-amber-500/15 px-[1.2rem] py-[0.8rem] text-[1.1rem] text-amber-200">Microsoft Edge or Google Chrome wasn’t found, so apps will open in your default browser instead.</div>}
       {recent.length > 0 && <Row title="Recently Opened">{recent.map((a) => <AppTile key={a.id} app={a} fk={`r:${a.id}`} />)}</Row>}
       <Row title="All Apps">{STREAMING_APPS.map((a, i) => <AppTile key={a.id} app={a} fk={`a:${a.id}`} />)}</Row>
-      <Row title="My Websites" subtitle="Any streaming site or web app">
-        {sites.data?.map((s) => <SiteTile key={s.ref} it={s} fk={`site:${s.ref}`} onKey={(e) => { if (e.k === 'menu') { api.lists.toggle(pid(), 'sites', s).then(sites.reload); return true; } }} />)}
+      <Row title="My Websites & Windows Apps" subtitle="Press Menu on a tile to remove it">
+        {sites.data?.map((s) => <SiteTile key={s.ref} it={s} fk={`site:${s.kind}:${s.ref}`} onKey={(e) => { if (e.k === 'menu') { api.lists.toggle(pid(), 'sites', s).then(sites.reload); return true; } }} />)}
         <Card fk="site:add" shape="logo" title="Add website" sub="Name + address" icon="＋" onSelect={() => setAdd(true)} />
       </Row>
       <div className="px-[3.5rem] pt-[1rem] text-[1.05rem] leading-relaxed text-white/50">
