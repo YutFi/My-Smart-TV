@@ -211,8 +211,9 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     if (!a) throw new Error('Unknown app');
     run('INSERT INTO recent_apps(profile_id,app_id,opened) VALUES (?,?,?) ON CONFLICT(profile_id,app_id) DO UPDATE SET opened=excluded.opened', pid, appId, Date.now());
     if (a.protocol && launcher.launchProtocol(a.protocol)) return { ok: true, via: 'app' };
-    const found = (a.exe || []).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
-    if (found) return { ...(await launcher.launchNative(found, { label: a.name, gaming: a.gaming })), via: 'desktop' };
+    const preferWeb = a.id === 'nebula' && loadSettings().nebulaMode === 'web';
+    const found = preferWeb ? undefined : (a.exe || []).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
+    if (found) return { ...(await launcher.launchNative(found, { label: a.name, gaming: a.gaming, fullscreen: a.fullscreen })), via: 'desktop' };
     return { ...launcher.launchUrl(a.url, { tv: a.tv && false, label: a.name, gaming: a.gaming }), via: 'browser' };
   });
   // Windows programs the user added (or built-in apps with a desktop client): launched natively, gaming mode applied.

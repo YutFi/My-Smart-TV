@@ -8,6 +8,7 @@ const common = {
   sourcemap: false,
   external: ['electron', 'electron-updater'],
   logLevel: 'info',
+  loader: { '.ps1': 'text' },
 };
 
 await build({ ...common, entryPoints: ['electron/main.ts'], outfile: 'dist-electron/main.js' });

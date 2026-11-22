@@ -68,6 +68,7 @@ function General() {
       <ToggleRow label="Resume last channel" desc="Start playing the last live channel automatically." value={s.resumeLastChannel} onChange={(v) => updateSettings({ resumeLastChannel: v })} />
       <ToggleRow label="Ask “Who’s watching?” at start" value={s.askProfileOnStart} onChange={(v) => updateSettings({ askProfileOnStart: v })} />
       <SectionTitle>Gaming & power</SectionTitle>
+      <ChoiceRow label="Nebula tile opens" desc="The desktop client has a fixed-size window (MY SMART TV centres it borderless on screen). The website runs the browser version in true full screen." value={s.nebulaMode} onChange={(v) => updateSettings({ nebulaMode: v })} options={[{ value: 'desktop', label: 'Desktop client (best-fit)' }, { value: 'web', label: 'Website — true full screen' }]} />
       <ToggleRow label="Gaming mode (Nebula & Windows games)" desc="When you open Nebula or a Windows game from MY SMART TV: switches Windows to the High performance power plan (restored afterwards), keeps the screen awake, and makes MY SMART TV use almost no CPU/GPU in the background." value={s.gamingMode} onChange={(v) => updateSettings({ gamingMode: v })} />
       <SettingRow label="Sleep timer" desc="Stop playback after a set time." right="Set ›" onSelect={() => setSleep(true)} />
       <ChoiceRow label="When the sleep timer ends" value={s.sleepAction} onChange={(v) => updateSettings({ sleepAction: v })} options={[{ value: 'stop', label: 'Stop playback' }, { value: 'sleep-pc', label: 'Stop and put the PC to sleep' }]} />

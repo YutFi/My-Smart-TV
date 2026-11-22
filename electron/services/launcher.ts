@@ -7,6 +7,7 @@ import { log } from './log';
 import { broadcast } from './bus';
 import { getTargetDisplay } from './system';
 import { enter as enterGaming, exit as exitGaming } from './gaming';
+import FULLSCREEN_PS from '../ps/fullscreen.ps1';
 
 // Streaming services rely on Widevine DRM, which stock Electron does not ship. So official sites/apps are opened in the
 // PC's own Edge/Chrome (which has Widevine) in a fullscreen app window with a dedicated profile. DRM is never bypassed.
@@ -92,7 +93,17 @@ export function bringTvToFront(reason = '') {
 
 // Launch an installed Windows program (e.g. the Nebula desktop client). ShellExecute is used so programs that need
 // elevation show Windows' normal prompt. MY SMART TV steps aside and returns when the program's process ends.
-export async function launchNative(exe: string, opts: { label?: string; gaming?: boolean } = {}): Promise<{ ok: boolean; error?: string }> {
+// Borderless full-screen helper (see electron/ps/fullscreen.ps1) — only touches the launched program's own window.
+function goFullscreen(procName: string) {
+  try {
+    const file = path.join(app.getPath('userData'), 'fullscreen.ps1');
+    fs.writeFileSync(file, FULLSCREEN_PS);
+    const c = spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', file, '-Name', procName, '-Seconds', '60'], { windowsHide: true, stdio: 'ignore' });
+    c.unref();
+  } catch (e) { log.warn('Fullscreen helper failed', e); }
+}
+
+export async function launchNative(exe: string, opts: { label?: string; gaming?: boolean; fullscreen?: boolean } = {}): Promise<{ ok: boolean; error?: string }> {
   if (!/\.exe$/i.test(exe) || !fs.existsSync(exe)) return { ok: false, error: `Program not found: ${exe}` };
   if (child && child.pid) { execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], () => undefined); child = null; }
   if (nativeWatch) { clearInterval(nativeWatch); nativeWatch = null; }
@@ -101,6 +112,7 @@ export async function launchNative(exe: string, opts: { label?: string; gaming?:
   log.info(`Launched ${opts.label || exe}`);
   if (opts.gaming) await enterGaming(opts.label || path.basename(exe));
   const name = path.basename(exe);
+  if (opts.fullscreen) goFullscreen(name.replace(/\.exe$/i, ''));
   const w = getMainWindow();
   setTimeout(() => { if (w && !w.isDestroyed()) w.minimize(); }, 1200);
   showReturnButton();
