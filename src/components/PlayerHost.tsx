@@ -88,6 +88,7 @@ function Player({ req }: { req: PlayRequest }) {
 
   // ----- source loading with reconnection -----
   const loadRef = useRef<() => void>(() => undefined);
+  const pickedAudio = useRef(false);
   const dashRef = useRef<dashjs.MediaPlayerClass | null>(null);
   const teardown = useCallback(() => {
     hlsRef.current?.destroy(); hlsRef.current = null;
@@ -114,6 +115,7 @@ function Player({ req }: { req: PlayRequest }) {
   const loadNow = useCallback(() => {
     const v = videoRef.current; if (!v) return;
     teardown();
+    pickedAudio.current = false;
     const myAttempt = ++attemptRef.current;
     setPhase((p) => (p === 'reconnecting' ? p : 'loading'));
     const url = req.url;
@@ -173,6 +175,17 @@ function Player({ req }: { req: PlayRequest }) {
       for (let i = 0; i < at.length; i++) out.push({ id: i, label: at[i].label || at[i].language || `Track ${i + 1}`, active: !!at[i].enabled });
     }
     setAudioTracks(out);
+    // honour Settings > Player > Preferred audio language, once per stream
+    if (out.length > 1 && !pickedAudio.current) {
+      pickedAudio.current = true;
+      const want = ({ en: ['en', 'eng', 'english'], ms: ['ms', 'msa', 'may', 'malay', 'melayu'], zh: ['zh', 'zho', 'chi', 'chinese', 'mandarin', 'cantonese'], ta: ['ta', 'tam', 'tamil'] } as Record<string, string[]>)[appStore.get().settings.audioLang] || [];
+      const langOf = (i: number) => String((hlsRef.current && hlsRef.current.audioTracks.length > 1 ? (hlsRef.current.audioTracks[i] as any)?.lang || hlsRef.current.audioTracks[i]?.name : (v as any)?.audioTracks?.[i]?.language || (v as any)?.audioTracks?.[i]?.label) || '').toLowerCase();
+      const idx = out.findIndex((t) => want.some((w) => langOf(t.id) === w || langOf(t.id).startsWith(w + '-')));
+      if (idx >= 0 && !out[idx].active) {
+        if (hlsRef.current && hlsRef.current.audioTracks.length > 1) hlsRef.current.audioTrack = out[idx].id;
+        else if (v && (v as any).audioTracks) { const at = (v as any).audioTracks; for (let i = 0; i < at.length; i++) at[i].enabled = i === out[idx].id; }
+      }
+    }
   }
 
   useEffect(() => {

@@ -1,7 +1,6 @@
 import { api, type BatteryInfo } from './api';
 import { createStore, useStore } from './store';
 import { toast } from './app';
-import { play } from './sfx';
 
 export const batteryStore = createStore<BatteryInfo>({ present: false, percent: 0, charging: false, pluggedIn: true, minutes: -1 });
 export const useBattery = () => useStore(batteryStore);
@@ -13,8 +12,8 @@ function apply(b: BatteryInfo) {
   if (!b.present) return;
   // low-battery warnings (once per threshold, re-armed when charging or recovered)
   if (b.charging || b.pluggedIn || b.percent > 25) { warned = 100; return; }
-  if (b.percent <= 10 && warned > 10) { warned = 10; play('error'); toast(`Battery very low: ${b.percent}% — plug in your charger now`, 'error', 9000); }
-  else if (b.percent <= 20 && warned > 20) { warned = 20; play('error'); toast(`Battery low: ${b.percent}% — plug in your charger soon`, 'error', 7000); }
+  if (b.percent <= 10 && warned > 10) { warned = 10; toast(`Battery very low: ${b.percent}% — plug in your charger now`, 'error', 9000); }
+  else if (b.percent <= 20 && warned > 20) { warned = 20; toast(`Battery low: ${b.percent}% — plug in your charger soon`, 'error', 7000); }
 }
 
 export function initBattery() {

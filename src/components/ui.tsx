@@ -6,14 +6,14 @@ import { pushScope, popScope, registerElementKeys, useKeys, type KeyEv } from '.
 // ---------- Focusable ----------
 export interface FocusableProps {
   className?: string; style?: CSSProperties; children?: ReactNode; onSelect?: () => void; onKey?: (e: KeyEv) => boolean | void;
-  fk?: string; autoFocus?: boolean; disabled?: boolean; onFocus?: () => void; title?: string; tag?: 'div' | 'button';
+  fk?: string; autoFocus?: boolean; disabled?: boolean; onFocus?: () => void; title?: string; tag?: 'div' | 'button'; silent?: boolean;
 }
-export function Focusable({ className = '', style, children, onSelect, onKey, fk, autoFocus, disabled, onFocus, title }: FocusableProps) {
+export function Focusable({ className = '', style, children, onSelect, onKey, fk, autoFocus, disabled, onFocus, title, silent }: FocusableProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { registerElementKeys(ref.current, onKey || null); return () => registerElementKeys(ref.current, null); });
   return (
     <div
-      ref={ref} data-f="" data-fk={fk} data-autofocus={autoFocus ? '' : undefined} data-disabled={disabled ? '' : undefined}
+      ref={ref} data-f="" data-fk={fk} data-autofocus={autoFocus ? '' : undefined} data-disabled={disabled ? '' : undefined} data-silent={silent ? '' : undefined}
       tabIndex={-1} role="button" aria-label={title} className={className} style={style} onFocus={onFocus}
       onClick={(e) => { if (!disabled) { e.stopPropagation(); onSelect?.(); } }}
     >{children}</div>
@@ -116,7 +116,7 @@ export function Pill({ children, active, onSelect, fk, autoFocus }: { children: 
 // ---------- Modal ----------
 export function Modal({ title, children, onClose, width = 52, footer }: { title?: string; children: ReactNode; onClose: () => void; width?: number; footer?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => { const el = ref.current!; pushScope(el); play('open'); return () => popScope(el); }, []);
+  useEffect(() => { const el = ref.current!; pushScope(el); play('open'); return () => { popScope(el); play('close'); }; }, []);
   useKeys((e) => { if (e.k === 'back' || e.k === 'backspace') { onClose(); return true; } }, true);
   return createPortal(
     <div ref={ref} className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 backdrop-blur-sm fade-in">

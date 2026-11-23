@@ -40,6 +40,7 @@ if (!app.requestSingleInstanceLock()) {
 
 function inLibrary(p: string): boolean {
   const n = path.normalize(p).toLowerCase();
+  if (n.startsWith(path.join(app.getPath('userData'), 'wallpapers').toLowerCase() + path.sep)) return true;
   if (allowedFiles.has(n)) return true;
   return all<any>('SELECT path FROM folders').some((f) => n.startsWith(path.normalize(f.path).toLowerCase() + path.sep) || n === path.normalize(f.path).toLowerCase());
 }

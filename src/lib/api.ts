@@ -87,6 +87,7 @@ export const api = {
     shows: (): Promise<{ name: string; poster: string; backdrop: string; overview: string; tmdbId: number; episodes: number; seasons: number }[]> => inv('library:shows'),
     subtitle: (p: string): Promise<string> => inv('library:subtitle', p),
   },
+  wallpaper: { pick: (kind: 'image' | 'video'): Promise<string | null> => inv('wallpaper:pick', kind) },
   dialog: { folder: (): Promise<string | null> => inv('dialog:folder'), file: (k: 'playlist' | 'media' | 'subtitle'): Promise<string | null> => inv('dialog:file', k) },
   tmdb: {
     status: (): Promise<{ hasKey: boolean }> => inv('tmdb:status'),

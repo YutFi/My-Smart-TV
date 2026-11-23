@@ -54,14 +54,20 @@ const col = 'flex flex-col gap-[0.5rem]';
 function General() {
   const s = useApp().settings;
   const [rows, setRows] = useState(false);
+  const [wpMenu, setWpMenu] = useState(false);
+  const pickWallpaper = async (kind: 'image' | 'video') => { try { const p = await api.wallpaper.pick(kind); if (p) { await updateSettings({ wallpaper: kind, wallpaperFile: p }); toast('Wallpaper set', 'ok', 2500); } } catch (e: any) { toast(e.message || 'Could not use that file', 'error', 5000); } };
   const [sleep, setSleep] = useState(false);
   return (
     <div className={col}>
       <SectionTitle>Appearance</SectionTitle>
-      <ChoiceRow label="Theme" value={s.theme} onChange={(v) => updateSettings({ theme: v })} options={[{ value: 'cinematic', label: 'Cinematic (purple & blue)' }, { value: 'midnight', label: 'Midnight blue' }, { value: 'oled', label: 'OLED black' }]} />
+      <ChoiceRow label="Theme" value={s.theme} onChange={(v) => updateSettings({ theme: v })} options={[{ value: 'cinematic', label: 'Cinematic (purple & blue)' }, { value: 'midnight', label: 'Midnight blue' }, { value: 'ocean', label: 'Ocean (teal)' }, { value: 'emerald', label: 'Emerald (green)' }, { value: 'sunset', label: 'Sunset (orange & pink)' }, { value: 'rose', label: 'Rose (red & violet)' }, { value: 'oled', label: 'OLED black' }]} />
       <ChoiceRow label="Language" desc="Applies to movie/series metadata and the navigation bar. Other screens are English." value={s.language} onChange={(v) => updateSettings({ language: v })} options={[{ value: 'en', label: 'English' }, { value: 'ms', label: 'Bahasa Melayu' }, { value: 'zh', label: '中文' }, { value: 'ta', label: 'தமிழ்' }]} />
+      <ChoiceRow label="Live wallpaper" desc="The animated or picture/video backdrop behind every screen. It pauses during video and games." value={s.wallpaper} onChange={(v) => { if ((v === 'image' || v === 'video') && !s.wallpaperFile) { pickWallpaper(v); return; } updateSettings({ wallpaper: v }); }} options={[{ value: 'default', label: 'Default (aurora + floating lights)' }, { value: 'gradient', label: 'Flowing colours' }, { value: 'aurora', label: 'Aurora lights' }, { value: 'stars', label: 'Starfield' }, { value: 'bokeh', label: 'Floating bokeh' }, { value: 'waves', label: 'Moonlit waves' }, { value: 'grid', label: 'Neon horizon' }, { value: 'image', label: 'My picture' }, { value: 'video', label: 'My video (loops)' }]} />
+      <SettingRow label="Choose a picture or video wallpaper" desc="Copies your file into MY SMART TV so it keeps working if the original moves." right={s.wallpaperFile ? 'Change ›' : 'Choose ›'} onSelect={() => setWpMenu(true)} />
+      <SliderRow label="Wallpaper dimming" desc="Darkens the wallpaper so text stays easy to read." value={s.wallpaperDim} min={0} max={0.8} step={0.05} fmt={(v) => `%`} onChange={(v) => updateSettings({ wallpaperDim: v })} />
       <ToggleRow label="Animated backgrounds & effects" desc="Floating light particles, focus glow and shine effects. Turn off on slow PCs. They pause automatically during video and games." value={s.animatedBackground} onChange={(v) => updateSettings({ animatedBackground: v })} />
       <ToggleRow label="Sound effects" desc="Soft sounds when you move, select and go back, plus the startup chime and app launch whoosh." value={s.uiSounds} onChange={(v) => { updateSettings({ uiSounds: v }); if (v) setTimeout(() => play('select'), 80); }} />
+      <ChoiceRow label="Sound style" desc="Soft: warm and gentle. Glass: bright bell-like shimmer. Retro: chip-tune beeps." value={s.soundTheme} onChange={(v) => { updateSettings({ soundTheme: v }); setTimeout(() => play('success'), 120); }} options={[{ value: 'soft', label: 'Soft' }, { value: 'glass', label: 'Glass' }, { value: 'retro', label: 'Retro' }]} />
       <SliderRow label="Sound effects volume" value={s.uiSoundVolume} min={0.1} max={1} step={0.1} fmt={(v) => `${Math.round(v * 100)}%`} onChange={(v) => { updateSettings({ uiSoundVolume: v }); setTimeout(() => play('select'), 80); }} />
       <ToggleRow label="Start-up intro" desc="A short animated intro with the MY SMART TV logo and chime each time the app opens." value={s.bootSplash} onChange={(v) => updateSettings({ bootSplash: v })} />
       <ToggleRow label="App launch splash screen" desc="An animated splash in the app's colours (with sound) while Netflix, Nebula, YouTube and other apps open. Press Back to cancel." value={s.launchSplash} onChange={(v) => updateSettings({ launchSplash: v })} />
@@ -81,6 +87,15 @@ function General() {
       <ChoiceRow label="Screensaver style" value={s.screensaverStyle} onChange={(v) => updateSettings({ screensaverStyle: v })} options={[{ value: 'auto', label: 'Auto (rotates all scenes)' }, { value: 'aurora', label: 'Aurora lights' }, { value: 'stars', label: 'Starfield' }, { value: 'bokeh', label: 'Floating lights' }, { value: 'waves', label: 'Moonlit waves' }, { value: 'grid', label: 'Neon horizon' }, { value: 'artwork', label: 'Movie artwork (needs TMDB key)' }]} />
       <SettingRow label="Preview screensaver" desc="Press any key to exit the preview." right="▶ Preview" onSelect={() => previewScreensaver()} />
       {rows && <HomeRows onClose={() => setRows(false)} />}
+      {wpMenu && (
+        <Modal title="Wallpaper" onClose={() => setWpMenu(false)} width={44}>
+          <div className="flex flex-col gap-[0.6rem]">
+            <Button autoFocus icon="🖼" onSelect={() => { setWpMenu(false); pickWallpaper('image'); }}>Choose a picture…</Button>
+            <Button icon="🎞" onSelect={() => { setWpMenu(false); pickWallpaper('video'); }}>Choose a looping video…</Button>
+            <p className="text-[1rem] text-white/50">Pictures: JPG, PNG, WebP. Videos: MP4 or WebM (muted, up to 600 MB). Video wallpapers use extra GPU — pick a short 1080p clip.</p>
+          </div>
+        </Modal>
+      )}
       {sleep && (
         <Modal title="Sleep timer" onClose={() => setSleep(false)} width={40}>
           <div className="grid grid-cols-3 gap-[0.8rem]">{[0, 15, 30, 45, 60, 90, 120, 180].map((m, i) => <Button key={m} autoFocus={i === 0} onSelect={() => { setSleepTimer(m); setSleep(false); }}>{m ? `${m} min` : 'Off'}</Button>)}</div>

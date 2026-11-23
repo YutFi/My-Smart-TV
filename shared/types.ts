@@ -3,7 +3,7 @@
 export interface Settings {
   // general
   language: string;
-  theme: 'cinematic' | 'midnight' | 'oled';
+  theme: 'cinematic' | 'midnight' | 'oled' | 'ocean' | 'sunset' | 'emerald' | 'rose';
   homeRows: string[]; // ordered ids of rows shown on Home
   startupFullscreen: boolean;
   autoStart: boolean;
@@ -48,6 +48,10 @@ export interface Settings {
   bootSplash: boolean;
   nebulaMode: 'desktop' | 'web';
   animatedBackground: boolean;
+  wallpaper: 'default' | 'aurora' | 'stars' | 'bokeh' | 'waves' | 'grid' | 'gradient' | 'image' | 'video';
+  wallpaperFile: string; // copied into the app's own wallpapers folder
+  wallpaperDim: number; // 0..0.85 darkening over the wallpaper
+  soundTheme: 'soft' | 'glass' | 'retro';
   sleepAction: 'stop' | 'sleep-pc';
   // parental
   parentalEnabled: boolean;
@@ -101,6 +105,10 @@ export const DEFAULT_SETTINGS: Settings = {
   bootSplash: true,
   nebulaMode: 'desktop',
   animatedBackground: true,
+  wallpaper: 'default',
+  wallpaperFile: '',
+  wallpaperDim: 0.25,
+  soundTheme: 'soft',
   sleepAction: 'stop',
   parentalEnabled: false,
   lastRoute: 'home',

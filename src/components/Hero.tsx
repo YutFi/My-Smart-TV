@@ -19,13 +19,13 @@ export function Hero({ slides, extra }: { slides: HeroSlide[]; extra?: ReactNode
   const s = slides[i] || slides[0];
   if (!s) return null;
   return (
-    <div ref={holder} className="relative mb-[1.2rem] h-[40vh] min-h-[22rem] overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 72%, transparent)', maskImage: 'linear-gradient(to bottom, #000 72%, transparent)' }} onFocusCapture={() => (hover.current = true)} onBlurCapture={() => (hover.current = false)}>
+    <div ref={holder} className="relative mb-[1.2rem] h-[40vh] min-h-[22rem] overflow-hidden" style={{ WebkitMaskImage: 'linear-gradient(to bottom, #000 72%, transparent), linear-gradient(to right, transparent, #000 4%, #000 96%, transparent)', WebkitMaskComposite: 'source-in', maskImage: 'linear-gradient(to bottom, #000 72%, transparent), linear-gradient(to right, transparent, #000 4%, #000 96%, transparent)', maskComposite: 'intersect' }} onFocusCapture={() => (hover.current = true)} onBlurCapture={() => (hover.current = false)}>
       {slides.map((sl, idx) => (
         <div key={sl.id} className="absolute inset-0 transition-opacity duration-[1200ms]" style={{ opacity: idx === i ? 1 : 0 }}>
-          {sl.backdrop ? <img src={sl.backdrop} alt="" className="h-full w-full object-cover" style={{ animation: idx === i ? 'kenburns 18s ease-out forwards' : undefined }} /> : <div className="h-full w-full bg-gradient-to-br from-accent-purple/40 via-ink-700 to-accent-blue/30" />}
+          {sl.backdrop ? <img src={sl.backdrop} alt="" className="h-full w-full object-cover" style={{ animation: idx === i ? 'kenburns 18s ease-out forwards' : undefined }} /> : <div className="h-full w-full bg-gradient-to-br from-accent-purple/20 via-transparent to-accent-blue/15" />}
         </div>
       ))}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent" />
+      {s.backdrop && <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />}
       <div className="hero-sweep" />
       <div key={s.id} className="page-enter absolute bottom-[2.6rem] left-[3.5rem] max-w-[52rem]">
         {s.tag && <div className="mb-[0.6rem] inline-block rounded-md bg-accent-purple/80 px-[0.7rem] py-[0.15rem] text-[0.95rem] font-bold uppercase tracking-widest">{s.tag}</div>}

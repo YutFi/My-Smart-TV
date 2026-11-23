@@ -3,7 +3,7 @@ import { Focusable } from './ui';
 import { nav, useApp, useRoute, toastStore, TABS } from '../lib/app';
 import { useStore } from '../lib/store';
 import { fmtClock } from '../lib/format';
-import { AmbientBackground } from './Effects';
+import { Wallpaper } from './Wallpaper';
 import { BatteryBadge } from './Battery';
 import { useClock } from '../lib/clock';
 
@@ -69,5 +69,5 @@ export function Toasts() {
 }
 
 export function Background() {
-  return <div className="bg-cinema absolute inset-0"><div className="aurora"><i /><i /><i /></div><AmbientBackground /></div>;
+  return <div className="bg-cinema absolute inset-0"><Wallpaper /></div>;
 }

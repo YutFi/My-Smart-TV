@@ -29,7 +29,7 @@ export function StatusWidget() {
   return (
     <div className="glass float-slow absolute right-[3.5rem] top-[1.2rem] z-20 flex items-center gap-[1.6rem] rounded-[1.4rem] px-[1.8rem] py-[1.1rem]">
       <div>
-        <div className="text-[3.2rem] font-light leading-none tabular-nums" style={{ textShadow: '0 0 1.6rem rgba(139,92,246,0.6)' }}>{fmtClock(now)}</div>
+        <div className="text-[3.2rem] font-light leading-none tabular-nums" style={{ textShadow: '0 0 1.6rem rgb(var(--ap) / 0.6)' }}>{fmtClock(now)}</div>
         <div className="mt-[0.4rem] text-[1.1rem] text-white/65">{new Date(now).toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}</div>
       </div>
       {b.present && (

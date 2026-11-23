@@ -185,8 +185,8 @@ function Guide({ channels, all, onMore, total }: { channels: Channel[]; all: Cha
       </div>
       <div data-hscroll="" className="hscroll relative rounded-[0.9rem] border border-white/10 bg-black/20">
         <div className="relative" style={{ width: `${12 + slots.length * SLOT_REM}rem` }}>
-          <div className="sticky top-0 z-20 flex h-[2.4rem] border-b border-white/10 bg-[#0a0d1f]">
-            <div className="sticky left-0 z-30 w-[12rem] shrink-0 bg-[#0a0d1f]" />
+          <div className="sticky top-0 z-20 flex h-[2.4rem] border-b border-white/10 bg-[color:var(--bg1)]">
+            <div className="sticky left-0 z-30 w-[12rem] shrink-0 bg-[color:var(--bg1)]" />
             {slots.map((s) => <div key={s} className="shrink-0 border-l border-white/10 px-[0.5rem] text-[0.95rem] leading-[2.4rem] text-white/60" style={{ width: `${SLOT_REM}rem` }}>{fmtClock(s)}</div>)}
           </div>
           <div className="pointer-events-none absolute bottom-0 top-0 z-10 w-[0.15rem] bg-red-500/80" style={{ left: `${12 + nowX}rem` }} />
@@ -194,7 +194,7 @@ function Guide({ channels, all, onMore, total }: { channels: Channel[]; all: Cha
             const progs = (c.tvgId && data[c.tvgId]) || [];
             return (
               <div key={c.id} className="flex h-[4.6rem] border-b border-white/5">
-                <Focusable fk={`g:${c.id}`} onFocus={() => { setSel({ c }); if (i >= channels.length - 6 && channels.length < total) onMore(); }} onSelect={() => play(c)} className="f-tile sticky left-0 z-20 flex w-[12rem] shrink-0 items-center gap-[0.6rem] !rounded-none !bg-[#0c1024] px-[0.7rem]">
+                <Focusable fk={`g:${c.id}`} onFocus={() => { setSel({ c }); if (i >= channels.length - 6 && channels.length < total) onMore(); }} onSelect={() => play(c)} className="f-tile sticky left-0 z-20 flex w-[12rem] shrink-0 items-center gap-[0.6rem] !rounded-none !bg-[color:var(--ink8)] px-[0.7rem]">
                   <span className="w-[2.2rem] text-right text-[0.9rem] text-white/40">{c.num}</span>
                   <div className="h-[2.4rem] w-[3.4rem] shrink-0"><Art src={c.logo} title={c.name.slice(0, 2)} fit="contain" className="h-full w-full" /></div>
                   <span className="clamp-1 text-[0.95rem]">{c.name}</span>

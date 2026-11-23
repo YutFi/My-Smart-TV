@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Modal, Focusable } from './ui';
 import { useKeys } from '../lib/nav';
+import { play } from '../lib/sfx';
 
 const ROWS_ABC = ['1234567890', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm.-_'];
 const ROWS_SYM = ['1234567890', '!@#$%^&*()', '-_=+[]{};:', '\'"\\|,.<>/?'];
@@ -13,7 +14,7 @@ export function OnScreenKeyboard({ title, initial = '', mode = 'text', onSubmit,
   const [sym, setSym] = useState(false);
   const physical = useRef(false);
   const maxLen = mode === 'pin' ? 4 : 400;
-  const add = (c: string) => setVal((v) => (v.length < maxLen ? v + c : v));
+  const add = (c: string) => { play('type'); setVal((v) => (v.length < maxLen ? v + c : v)); };
 
   useKeys((e) => {
     if (e.k === 'char' && e.ev) { physical.current = true; if (mode === 'pin' || mode === 'number') { if (/\d/.test(e.ch)) add(e.ch); } else add(e.ch); return true; }
@@ -38,13 +39,13 @@ export function OnScreenKeyboard({ title, initial = '', mode = 'text', onSubmit,
         {rows.map((r, ri) => (
           <div key={ri} className="flex gap-[0.5rem]">
             {r.split('').map((c) => (
-              <Focusable key={c} autoFocus={ri === 0 && c === r[0]} onSelect={() => add(label(c))} className="f-key flex h-[3.6rem] w-[3.6rem] items-center justify-center text-[1.5rem] font-semibold">{label(c)}</Focusable>
+              <Focusable key={c} silent autoFocus={ri === 0 && c === r[0]} onSelect={() => add(label(c))} className="f-key flex h-[3.6rem] w-[3.6rem] items-center justify-center text-[1.5rem] font-semibold">{label(c)}</Focusable>
             ))}
           </div>
         ))}
         {mode === 'pin' || mode === 'number' ? (
           <div className="mt-[0.5rem] flex gap-[0.5rem]">
-            <Focusable onSelect={() => setVal((v) => v.slice(0, -1))} className="f-key flex h-[3.6rem] w-[7rem] items-center justify-center text-[1.3rem]">⌫</Focusable>
+            <Focusable onSelect={() => { play('delete'); setVal((v) => v.slice(0, -1)); }} className="f-key flex h-[3.6rem] w-[7rem] items-center justify-center text-[1.3rem]">⌫</Focusable>
             <Focusable onSelect={() => onSubmit(val)} className="f-key flex h-[3.6rem] w-[7rem] items-center justify-center bg-accent-purple/60 text-[1.3rem] font-bold">OK</Focusable>
           </div>
         ) : (
@@ -60,7 +61,7 @@ export function OnScreenKeyboard({ title, initial = '', mode = 'text', onSubmit,
               <Focusable onSelect={() => setShift((s) => !s)} className={`f-key flex h-[3.6rem] w-[5rem] items-center justify-center text-[1.4rem] ${shift ? '!bg-accent-purple/70' : ''}`}>⇧</Focusable>
               <Focusable onSelect={() => setSym((s) => !s)} className="f-key flex h-[3.6rem] w-[6rem] items-center justify-center text-[1.2rem]">{sym ? 'ABC' : '#+='}</Focusable>
               <Focusable onSelect={() => add(' ')} className="f-key flex h-[3.6rem] w-[15rem] items-center justify-center text-[1.2rem]">space</Focusable>
-              <Focusable onSelect={() => setVal((v) => v.slice(0, -1))} className="f-key flex h-[3.6rem] w-[5rem] items-center justify-center text-[1.4rem]">⌫</Focusable>
+              <Focusable onSelect={() => { play('delete'); setVal((v) => v.slice(0, -1)); }} className="f-key flex h-[3.6rem] w-[5rem] items-center justify-center text-[1.4rem]">⌫</Focusable>
               <Focusable onSelect={() => setVal('')} className="f-key flex h-[3.6rem] w-[6rem] items-center justify-center text-[1.2rem]">Clear</Focusable>
               <Focusable onSelect={() => onSubmit(val)} className="f-key flex h-[3.6rem] w-[7rem] items-center justify-center bg-accent-purple/60 text-[1.3rem] font-bold">Done</Focusable>
             </div>

@@ -152,6 +152,19 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openDirectory'], title: 'Choose a media folder (USB drives and network shares included)' });
     return r.canceled ? null : r.filePaths[0];
   });
+  handle('wallpaper:pick', async (e, kind: 'image' | 'video') => {
+    const filters = kind === 'video' ? [{ name: 'Videos', extensions: ['mp4', 'webm', 'm4v', 'mov'] }] : [{ name: 'Pictures', extensions: ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'] }];
+    const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openFile'], title: kind === 'video' ? 'Choose a looping video wallpaper' : 'Choose a wallpaper picture', filters });
+    if (r.canceled || !r.filePaths[0]) return null;
+    const src = r.filePaths[0];
+    if (fs.statSync(src).size > 600 * 1024 * 1024) throw new Error('That file is larger than 600 MB — pick a smaller one.');
+    const dir = path.join(app.getPath('userData'), 'wallpapers');
+    fs.mkdirSync(dir, { recursive: true });
+    for (const old of fs.readdirSync(dir)) { try { fs.unlinkSync(path.join(dir, old)); } catch { /* in use */ } }
+    const dest = path.join(dir, `wp-${Date.now()}${path.extname(src).toLowerCase()}`);
+    fs.copyFileSync(src, dest);
+    return dest;
+  });
   handle('dialog:program', async (e) => {
     const r = await dialog.showOpenDialog(mainWin(e)!, { properties: ['openFile'], title: 'Choose a Windows program or shortcut', defaultPath: 'C:\\Program Files', filters: [{ name: 'Programs & shortcuts', extensions: ['exe', 'lnk'] }] });
     if (r.canceled || !r.filePaths[0]) return null;

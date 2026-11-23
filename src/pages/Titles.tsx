@@ -97,7 +97,7 @@ export function TitleDetail({ kind, id }: { kind: 'movie' | 'tv'; id: number }) 
     <PageScroll>
       <div className="relative min-h-[46vh] overflow-hidden">
         {t.backdrop && <img src={t.backdrop} alt="" className="absolute inset-0 h-full w-full object-cover" />}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#05060d] via-[#05060d]/80 to-[#05060d]/20" /><div className="absolute inset-0 bg-gradient-to-t from-[#05060d] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[color:var(--bg0)] via-[color:var(--bg0)]/80 to-[color:var(--bg0)]/20" /><div className="absolute inset-0 bg-gradient-to-t from-[color:var(--bg0)] to-transparent" />
         <div className="relative flex gap-[2.4rem] px-[3.5rem] pb-[1.6rem] pt-[1rem]">
           <div className="hidden h-[26rem] w-[17.4rem] shrink-0 overflow-hidden rounded-[1rem] shadow-2xl md:block"><Art src={t.poster} title={t.title} className="h-full w-full" /></div>
           <div className="max-w-[58rem]">

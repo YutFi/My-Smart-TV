@@ -15,6 +15,14 @@ function sprite(hue: number, size = 64): HTMLCanvasElement {
   x.fillStyle = g; x.fillRect(0, 0, size, size); return c;
 }
 
+// hues of the current theme's three accent colours, so the floating light follows the chosen theme
+function themeHues(): number[] {
+  const cs = getComputedStyle(document.documentElement);
+  const hue = (v: string) => { const [r, g, b] = cs.getPropertyValue(v).trim().split(/\s+/).map(Number); if ([r, g, b].some((n) => Number.isNaN(n))) return 260; const mx = Math.max(r, g, b); const mn = Math.min(r, g, b); const d = mx - mn; if (!d) return 260; const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (Math.round(h * 60) + 360) % 360; };
+  const a = hue('--ap'); const b = hue('--ab'); const c = hue('--ac');
+  return [a, b, c, (a + 25) % 360, (b + 335) % 360];
+}
+
 export function AmbientBackground() {
   const ref = useRef<HTMLCanvasElement>(null);
   const { req } = useStore(playerStore);
@@ -24,7 +32,7 @@ export function AmbientBackground() {
   useEffect(() => {
     if (!on) return;
     const cv = ref.current!; const ctx = cv.getContext('2d')!;
-    const sprites = [250, 270, 215, 190, 300].map((h) => sprite(h));
+    const sprites = themeHues().map((h) => sprite(h));
     const W = () => cv.width; const H = () => cv.height;
     const resize = () => { const k = 0.5; cv.width = Math.floor(window.innerWidth * k); cv.height = Math.floor(window.innerHeight * k); };
     resize(); window.addEventListener('resize', resize);
@@ -53,7 +61,7 @@ export function AmbientBackground() {
     };
     raf = requestAnimationFrame(loop);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', resize); };
-  }, [on]);
+  }, [on, settings.theme]);
   if (!on) return null;
   return <canvas ref={ref} className="pointer-events-none absolute inset-0 h-full w-full" style={{ opacity: 0.9 }} />;
 }
@@ -84,5 +92,5 @@ export function FocusGlow() {
     return () => cancelAnimationFrame(raf);
   }, [on]);
   if (!on) return null;
-  return <div ref={ref} className="pointer-events-none fixed left-0 top-0 z-[5] rounded-full" style={{ opacity: 0, background: 'radial-gradient(closest-side, rgba(139,92,246,0.42), rgba(59,130,246,0.16) 55%, transparent)', transition: 'transform .38s cubic-bezier(.2,.7,.2,1), width .38s, height .38s, opacity .3s', willChange: 'transform' }} />;
+  return <div ref={ref} className="pointer-events-none fixed left-0 top-0 z-[5] rounded-full" style={{ opacity: 0, background: 'radial-gradient(closest-side, rgb(var(--ap) / 0.42), rgb(var(--ab) / 0.16) 55%, transparent)', transition: 'transform .38s cubic-bezier(.2,.7,.2,1), width .38s, height .38s, opacity .3s', willChange: 'transform' }} />;
 }

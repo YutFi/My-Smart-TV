@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { api } from './lib/api';
 import { appStore, loadLists, nav, reloadProfiles, routeStore, toast, TABS, updateSettings, useApp, useRoute, playMedia, channelRequest, isKids } from './lib/app';
 import { initNav, setDefaultBack, setDefaultHome, useKeys } from './lib/nav';
@@ -100,6 +100,7 @@ function AppInner() {
     initNav();
     initSfx();
     initBattery();
+    (window as any).__mstv = { updateSettings }; // diagnostics / automated checks
     setDefaultBack(() => nav.back());
     setDefaultHome(() => nav.go('home'));
     (async () => {
@@ -124,8 +125,8 @@ function AppInner() {
     return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); clearInterval(t); clearInterval(syncTimer); window.removeEventListener('focus', onFocus); off(); };
   }, []);
 
-  // ---- apply display settings ----
-  useEffect(() => {
+  // ---- apply display settings (layout effect: the theme must be on <html> before child effects read its colours) ----
+  useLayoutEffect(() => {
     const r = document.documentElement;
     r.dataset.theme = settings.theme;
     r.style.setProperty('--ui', String(settings.uiScale));
@@ -135,7 +136,7 @@ function AppInner() {
   }, [settings.theme, settings.uiScale, settings.overscan, settings.animatedBackground]);
 
   // UI sound settings + startup chime (once, after the first screen is ready)
-  useEffect(() => { configureSfx({ enabled: settings.uiSounds, volume: settings.uiSoundVolume, sink: settings.audioDeviceId }); }, [settings.uiSounds, settings.uiSoundVolume, settings.audioDeviceId]);
+  useEffect(() => { configureSfx({ enabled: settings.uiSounds, volume: settings.uiSoundVolume, sink: settings.audioDeviceId, pack: settings.soundTheme }); }, [settings.uiSounds, settings.uiSoundVolume, settings.audioDeviceId, settings.soundTheme]);
 
   // first scan for installed streaming apps shortly after a profile is active
   useEffect(() => { if (!profile) return; const t = setTimeout(() => syncApps(true), 4000); return () => clearTimeout(t); }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps

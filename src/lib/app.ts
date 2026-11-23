@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, type Channel, type ListItem, type MediaItem, type Pro
 import { api, mediaUrl } from './api';
 import { createStore, useStore } from './store';
 import { restoreFocusTo } from './nav';
+import { play } from './sfx';
 
 // ---------------- app state ----------------
 export const appStore = createStore<{ settings: Settings; profile: Profile | null; profiles: Profile[]; online: boolean; loaded: boolean }>({
@@ -29,6 +30,7 @@ export interface Toast { id: number; msg: string; kind: 'info' | 'error' | 'ok' 
 export const toastStore = createStore<{ items: Toast[] }>({ items: [] });
 let toastId = 1;
 export function toast(msg: string, kind: Toast['kind'] = 'info', ms = 3800) {
+  play(kind === 'error' ? 'error' : kind === 'ok' ? 'success' : 'notify');
   const t = { id: toastId++, msg, kind };
   toastStore.set((s) => ({ items: [...s.items, t] }));
   setTimeout(() => toastStore.set((s) => ({ items: s.items.filter((x) => x.id !== t.id) })), ms);
@@ -44,6 +46,7 @@ const focusedKey = () => (document.activeElement as HTMLElement | null)?.dataset
 
 export const nav = {
   go(page: string, params?: any) {
+    if (routeStore.get().route.page !== page) play('tab');
     routeStore.set({ route: { page, params }, stack: [] });
     if ((TABS as readonly string[]).includes(page)) updateSettings({ lastRoute: page }).catch(() => undefined);
   },
