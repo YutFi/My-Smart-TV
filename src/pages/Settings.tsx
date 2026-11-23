@@ -320,10 +320,10 @@ function SpotifySettings() {
       </div>
       {st.loading ? <Loading /> : s && (
         <>
-          <SettingRow label="Spotify for Windows" desc={s.spotifyInstalled ? 'Found.' : 'Not found. Install the desktop app from spotify.com/download (the Microsoft Store version can’t be customised), sign in once, then come back.'} right={s.spotifyInstalled ? '✓ installed' : 'Get Spotify ›'} onSelect={() => { if (!s.spotifyInstalled) api.launch.external('https://www.spotify.com/download/windows/'); }} />
+          <SettingRow label="Spotify for Windows" desc={s.spotifyInstalled ? 'Spotify desktop app found.' : s.storeVersion ? 'You have the Microsoft Store edition of Spotify, which can’t be customised. Installing below replaces it with the regular Spotify desktop app (same account and music).' : 'Spotify desktop app not found — installing below adds it automatically.'} right={s.spotifyInstalled ? '✓ desktop app' : s.storeVersion ? 'Store edition' : 'Not installed'} />
           <SettingRow label="Spicetify + Marketplace" desc={s.installed ? `Installed${s.theme ? ' — theme: ' + s.theme : ''}. Open Spotify and look for “Marketplace” in the sidebar to browse more themes and extensions.` : 'Not installed.'} right={s.installed ? '✓ installed' : ''} />
           <ChoiceRow label="Theme colour scheme" desc="Sleek is installed; you can change schemes or add other themes later from the Marketplace." value={scheme} onChange={setScheme} options={Object.keys(SCHEME_LABELS).map((k) => ({ value: k, label: SCHEME_LABELS[k] }))} />
-          <Button primary disabled={!s.spotifyInstalled} icon="✨" onSelect={() => setAsk(true)}>{s.installed ? 'Re-apply Spicetify, Marketplace & theme' : 'Install Spicetify, Marketplace & theme'}</Button>
+          <Button primary icon="✨" onSelect={() => setAsk(true)}>{s.installed ? 'Re-apply Spicetify, Marketplace & theme' : 'Install Spicetify, Marketplace & theme'}</Button>
           <div className="flex gap-[0.8rem]">
             <Button icon="🎧" disabled={!s.spotifyInstalled} onSelect={() => api.spicetify.openSpotify()}>Open Spotify</Button>
             {s.installed && <Button onSelect={() => setAskRestore(true)}>Restore Spotify to original</Button>}
@@ -331,8 +331,8 @@ function SpotifySettings() {
         </>
       )}
       {ask && (
-        <Confirm title="Install Spicetify?" confirmLabel="Yes, install" onClose={() => setAsk(false)} onConfirm={() => { setProg({ pct: 1, message: 'Starting…' }); api.spicetify.install(scheme); }}
-          message="MY SMART TV will download Spicetify, the Marketplace and the Sleek theme from GitHub (checked against their published checksums), close Spotify, patch the Spotify desktop app, and start it again. This modifies Spotify’s own program files, which Spotify’s terms don’t formally allow, and a Spotify update can undo it (just run this again). You can restore Spotify to its original state here at any time." />
+        <Confirm title="Install Spicetify?" confirmLabel="Yes, install" onClose={() => setAsk(false)} onConfirm={() => { setProg({ pct: 1, message: 'Starting…' }); api.spicetify.install(scheme, !!(s && !s.spotifyInstalled)); }}
+          message={'MY SMART TV will ' + (s && !s.spotifyInstalled ? (s.storeVersion ? 'remove the Microsoft Store edition of Spotify and install the regular Spotify desktop app from Spotify (signature-checked; you sign in to the same account, but offline downloads must be downloaded again), then ' : 'install the regular Spotify desktop app from Spotify (signature-checked), then ') : '') + 'download Spicetify, the Marketplace and the Sleek theme from GitHub (checked against their published checksums), close Spotify, patch the Spotify desktop app, and start it again. This modifies Spotify’s own program files, which Spotify’s terms don’t formally allow, and a Spotify update can undo it (just run this again). You can restore Spotify to its original state here at any time.'} />
       )}
       {askRestore && <Confirm title="Restore Spotify?" confirmLabel="Restore" onClose={() => setAskRestore(false)} onConfirm={async () => { const r = await api.spicetify.restore(); toast(r.ok ? 'Spotify restored to its original state' : r.error || 'Restore failed', r.ok ? 'ok' : 'error', 6000); st.reload(); }} message="Spotify will be closed, returned to its original (unmodified) state and restarted. The Marketplace and theme will disappear until you install them again." />}
       {prog && (

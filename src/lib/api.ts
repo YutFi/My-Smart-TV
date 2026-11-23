@@ -121,8 +121,8 @@ export const api = {
     external: (url: string) => inv('open:external', url),
   },
   spicetify: {
-    status: (): Promise<{ spotifyInstalled: boolean; installed: boolean; theme: string }> => inv('spicetify:status'),
-    install: (scheme: string): Promise<{ ok: boolean; error?: string }> => inv('spicetify:install', scheme),
+    status: (): Promise<{ spotifyInstalled: boolean; storeVersion: boolean; installed: boolean; theme: string }> => inv('spicetify:status'),
+    install: (scheme: string, replaceStore = false): Promise<{ ok: boolean; error?: string; needsReplace?: boolean }> => inv('spicetify:install', scheme, replaceStore),
     restore: (): Promise<{ ok: boolean; error?: string }> => inv('spicetify:restore'),
     openSpotify: (): Promise<boolean> => inv('spicetify:open'),
   },
