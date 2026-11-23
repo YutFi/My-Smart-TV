@@ -4,6 +4,8 @@ import { nav, useApp, useRoute, toastStore, TABS } from '../lib/app';
 import { useStore } from '../lib/store';
 import { fmtClock } from '../lib/format';
 import { AmbientBackground } from './Effects';
+import { BatteryBadge } from './Battery';
+import { useClock } from '../lib/clock';
 
 const TAB_META: Record<string, { label: string; icon: string }> = {
   home: { label: 'HOME', icon: '🏠' }, live: { label: 'LIVE TV', icon: '📺' }, movies: { label: 'MOVIES', icon: '🎬' }, series: { label: 'SERIES', icon: '🎞️' },
@@ -12,11 +14,7 @@ const TAB_META: Record<string, { label: string; icon: string }> = {
 };
 const ICON_ONLY = new Set(['search', 'settings']);
 
-export function useClock() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 10000); return () => clearInterval(t); }, []);
-  return now;
-}
+export { useClock };
 
 const I18N: Record<string, Record<string, string>> = {
   ms: { home: 'UTAMA', live: 'TV LANGSUNG', movies: 'FILEM', series: 'SIRI', sports: 'SUKAN', apps: 'APLIKASI', youtube: 'YOUTUBE', music: 'MUZIK', media: 'MEDIA SAYA', favorites: 'KEGEMARAN', search: 'CARI', settings: 'TETAPAN' },
@@ -37,19 +35,20 @@ export function TopNav({ onProfile, onPower }: { onProfile: () => void; onPower:
         <div className="flex h-[2.8rem] w-[2.8rem] items-center justify-center rounded-[0.8rem] bg-gradient-to-br from-accent-purple to-accent-blue text-[1.5rem] font-black shadow-lg shadow-accent-purple/40">▶</div>
         <div className="whitespace-nowrap text-[1.05rem] font-black leading-[1.15] tracking-[0.18em]">MY<br /><span className="text-accent-cyan">SMART TV</span></div>
       </div>
-      <Focusable fk="tab:back" onSelect={() => nav.back()} title="Back" className={`f-btn flex shrink-0 items-center gap-[0.35rem] px-[1rem] py-[0.5rem] text-[1.05rem] font-bold ${active === 'home' && !stack.length ? 'opacity-50' : ''}`}>◀ Back</Focusable>
+      <Focusable fk="tab:back" onSelect={() => nav.back()} title="Back" className={`f-btn flex shrink-0 items-center px-[0.9rem] py-[0.5rem] text-[1.05rem] font-bold ${active === 'home' && !stack.length ? 'opacity-50' : ''}`}>◀</Focusable>
       <nav className="flex flex-1 items-center gap-[0.15rem]">
         {TABS.filter((t) => !(profile?.kids && KIDS_HIDDEN.has(t))).map((t) => {
           const m = TAB_META[t];
           return (
-            <Focusable key={t} fk={`tab:${t}`} onSelect={() => nav.go(t)} title={label(t)} className={`f-tab flex items-center gap-[0.45rem] whitespace-nowrap px-[0.7rem] py-[0.5rem] text-[0.95rem] font-bold tracking-wide ${active === t ? 'active' : ''}`}>
+            <Focusable key={t} fk={`tab:${t}`} onSelect={() => nav.go(t)} title={label(t)} className={`f-tab flex items-center gap-[0.45rem] whitespace-nowrap px-[0.55rem] py-[0.5rem] text-[0.92rem] font-bold tracking-wide ${active === t ? 'active' : ''}`}>
               <span className="text-[1.15rem]">{m.icon}</span>{!ICON_ONLY.has(t) && <span>{label(t)}</span>}
             </Focusable>
           );
         })}
       </nav>
-      <div className="flex items-center gap-[1rem] text-[1.1rem]">
+      <div className="flex shrink-0 items-center gap-[0.7rem] text-[1.1rem]">
         <span title={online ? 'Online' : 'Offline'} className={`flex items-center gap-[0.3rem] text-[1rem] ${online ? 'text-emerald-400' : 'text-amber-400'}`}>{online ? '●' : '⚠ Offline'}</span>
+        <BatteryBadge />
         <span className="whitespace-nowrap text-[1.35rem] font-semibold tabular-nums">{fmtClock(now)}</span>
         <Focusable fk="tab:profile" onSelect={onProfile} title="Switch profile" className="f-tab flex h-[2.9rem] w-[2.9rem] items-center justify-center text-[1.6rem]" style={{ background: profile?.color }}>{profile?.avatar || '😀'}</Focusable>
         <Focusable fk="tab:power" onSelect={onPower} title="Power menu" className="f-tab flex h-[2.9rem] w-[2.9rem] items-center justify-center text-[1.4rem]">⏻</Focusable>

@@ -7,6 +7,7 @@ import { log } from './log';
 import { broadcast } from './bus';
 import { getTargetDisplay } from './system';
 import { enter as enterGaming, exit as exitGaming } from './gaming';
+import { currentBattery, onBattery, type BatteryInfo } from './battery';
 import FULLSCREEN_PS from '../ps/fullscreen.ps1';
 
 // Streaming services rely on Widevine DRM, which stock Electron does not ship. So official sites/apps are opened in the
@@ -47,8 +48,20 @@ function getMainWindow(): BrowserWindow | null {
 // A small always-on-top "back to MY SMART TV" pill shown while an external app/browser/VLC owns the screen, so a touchpad,
 // air mouse or phone remote can always get back without a keyboard shortcut.
 let returnWin: BrowserWindow | null = null;
+// The pill also shows the clock and (on laptops/tablets) the battery level, because a full-screen app hides the taskbar.
 const RETURN_HTML = `<!doctype html><meta charset="utf-8"><body style="margin:0;background:transparent;overflow:hidden;font-family:'Segoe UI',sans-serif;-webkit-user-select:none">
-<a href="mystv://home" style="display:flex;align-items:center;justify-content:center;height:44px;box-sizing:border-box;border-radius:22px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 18px rgba(0,0,0,.55);opacity:.88;letter-spacing:.04em">&#8962;&nbsp; MY SMART TV</a></body>`;
+<style>#bar{display:inline-flex;gap:8px;height:44px;opacity:.6;transition:opacity .25s}body:hover #bar{opacity:1}
+#st{display:flex;align-items:center;gap:10px;height:44px;box-sizing:border-box;padding:0 16px;border-radius:22px;background:rgba(10,13,31,.84);border:1px solid rgba(255,255,255,.14);color:#fff;font-weight:700;font-size:15px;box-shadow:0 4px 18px rgba(0,0,0,.55);white-space:nowrap}
+.bt{display:inline-block;position:relative;width:26px;height:12px;border:2px solid #fff;border-radius:3px}.bt:after{content:'';position:absolute;right:-5px;top:2px;width:3px;height:6px;background:#fff;border-radius:0 2px 2px 0}.bt i{position:absolute;left:1px;top:1px;bottom:1px;border-radius:1px}</style>
+<div id="bar"><a href="mystv://home" style="display:flex;align-items:center;justify-content:center;height:44px;box-sizing:border-box;padding:0 18px;border-radius:22px;background:linear-gradient(135deg,#8b5cf6,#3b82f6);color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 18px rgba(0,0,0,.55);letter-spacing:.04em;white-space:nowrap">&#8962;&nbsp; MY SMART TV</a>
+<div id="st"><span id="bat" style="display:none;align-items:center;gap:7px"></span><span id="clk" style="min-width:62px;text-align:right"></span></div></div>
+<script>
+function f(){document.getElementById('clk').textContent=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}f();setInterval(f,1000);
+window.__set=function(b){var el=document.getElementById('bat');
+if(!b||!b.present){el.style.display='none'}else{var c=b.charging||b.percent>50?'#34d399':b.percent>20?'#fbbf24':'#f87171';
+el.style.display='inline-flex';el.innerHTML='<span class="bt"><i style="width:'+Math.max(2,Math.round(b.percent*0.22))+'px;background:'+c+'"></i></span><span style="color:'+c+'">'+b.percent+'%'+(b.charging?' &#9889;':'')+'</span>'}
+return Math.ceil(document.getElementById('bar').getBoundingClientRect().width)+6};
+</script></body>`;
 
 function showReturnButton() {
   if (returnWin && !returnWin.isDestroyed()) return;
@@ -62,9 +75,26 @@ function showReturnButton() {
   returnWin.webContents.on('will-navigate', (e, url) => { e.preventDefault(); if (url.startsWith('mystv://')) bringTvToFront('button'); });
   returnWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   returnWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(RETURN_HTML));
+  returnWin.webContents.once('did-finish-load', () => void pushStatus(currentBattery()));
   returnWin.once('ready-to-show', () => returnWin?.showInactive());
+  unsubBattery?.(); unsubBattery = onBattery((b) => void pushStatus(b));
+  statusTimer = setInterval(() => void pushStatus(currentBattery()), 30_000);
+}
+let unsubBattery: (() => void) | null = null;
+let statusTimer: NodeJS.Timeout | null = null;
+
+// Update the pill's battery text and resize the (transparent) window to fit, so it never blocks more of the app than needed.
+async function pushStatus(b: BatteryInfo) {
+  const w = returnWin;
+  if (!w || w.isDestroyed()) return;
+  try {
+    const width = Number(await w.webContents.executeJavaScript(`window.__set(${JSON.stringify(b)})`));
+    if (width > 0 && !w.isDestroyed()) { const bounds = w.getBounds(); w.setBounds({ x: bounds.x, y: bounds.y, width, height: 48 }); }
+  } catch { /* page not ready yet */ }
 }
 function hideReturnButton() {
+  unsubBattery?.(); unsubBattery = null;
+  if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
   if (returnWin && !returnWin.isDestroyed()) returnWin.destroy();
   returnWin = null;
 }

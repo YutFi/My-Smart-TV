@@ -42,6 +42,7 @@ export interface Settings {
   uiSounds: boolean;
   uiSoundVolume: number;
   launchSplash: boolean;
+  bootSplash: boolean;
   nebulaMode: 'desktop' | 'web';
   animatedBackground: boolean;
   sleepAction: 'stop' | 'sleep-pc';
@@ -91,6 +92,7 @@ export const DEFAULT_SETTINGS: Settings = {
   uiSounds: true,
   uiSoundVolume: 0.6,
   launchSplash: true,
+  bootSplash: true,
   nebulaMode: 'desktop',
   animatedBackground: true,
   sleepAction: 'stop',

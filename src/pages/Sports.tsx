@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { api, type Game, type NewsItem } from '../lib/api';
 import { updateSettings, useApp, useAsync, toast } from '../lib/app';
 import { Art, Button, Card, EmptyState, Focusable, Loading, Modal, Pill, Row } from '../components/ui';
-import { GameCard, PageScroll } from '../components/content';
+import { GameCard, PageScroll, launchSite } from '../components/content';
 import { Header } from './Titles';
 
 export function Sports() {
@@ -56,7 +56,7 @@ export function Sports() {
           </>
         )}
 
-      {casters.length > 0 && <Row title="Where to watch" subtitle="Official broadcasters (subscription may be required)">{casters.map((b) => <Card key={b.name} fk={`bc:${b.name}`} shape="wide" width={17} title={b.name} sub="Open official site" icon="📡" onSelect={() => api.launch.url(b.url, { label: b.name })} />)}</Row>}
+      {casters.length > 0 && <Row title="Where to watch" subtitle="Official broadcasters (subscription may be required)">{casters.map((b) => <Card key={b.name} fk={`bc:${b.name}`} shape="wide" width={17} title={b.name} sub="Open official site" icon="📡" onSelect={() => launchSite(b.url, b.name)} />)}</Row>}
       {news.data && news.data.length > 0 && (
         <Row title="Latest News" subtitle="BBC Sport">
           {news.data.map((n, i) => <Card key={n.link} fk={`news:${i}`} shape="wide" title={n.title} sub={n.desc} image={n.image} onSelect={() => api.launch.url(n.link, { label: 'News' })} />)}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, type Title } from '../lib/api';
 import { channelRequest, localRequest, nav, pid, playMedia, useApp, toast } from '../lib/app';
 import { Card, Focusable, Loading, Row } from '../components/ui';
-import { AppTile, ListItemCard, PageScroll, TitleCard, openListItem } from '../components/content';
+import { AppTile, ListItemCard, PageScroll, TitleCard, launchSite, openListItem } from '../components/content';
 import { useKeys } from '../lib/nav';
 import { allowedChannel } from './LiveTV';
 import { fmtClock } from '../lib/format';
@@ -84,7 +84,7 @@ export function Search() {
               {res.apps.length > 0 && <Row title="Apps">{res.apps.map((a) => <AppTile key={a.id} app={a} fk={`sa:${a.id}`} />)}</Row>}
               {res.saved.length > 0 && <Row title="In Your Lists">{res.saved.map((it) => <ListItemCard key={it.kind + it.ref} it={it} fk={`ss:${it.kind}${it.ref}`} />)}</Row>}
               <Row title="Search elsewhere">
-                <Card fk="se:yt" shape="wide" title={`YouTube: “${q}”`} sub="Opens results" icon="▶️" onSelect={() => api.launch.url(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, { label: 'YouTube' })} />
+                <Card fk="se:yt" shape="wide" title={`YouTube: “${q}”`} sub="Opens results" icon="▶️" onSelect={() => launchSite(`https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`, 'YouTube')} />
                 {!res.titles.length && <Card fk="se:tmdb" shape="wide" title="Add TMDB key for movie search" sub="Settings → Network" icon="🔑" onSelect={() => nav.go('settings', { section: 'network' })} />}
               </Row>
             </div>

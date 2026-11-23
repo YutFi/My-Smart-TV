@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api, type Station } from '../lib/api';
 import { localRequest, playMedia, toggleList, useApp, useAsync, pid } from '../lib/app';
 import { Card, EmptyState, Loading, Pill, Row } from '../components/ui';
-import { PageScroll, launchApp } from '../components/content';
+import { PageScroll, launchApp, launchSite } from '../components/content';
 import { Header } from './Titles';
 
 const COUNTRIES = [{ id: 'MY', label: '🇲🇾 Malaysia' }, { id: 'SG', label: '🇸🇬 Singapore' }, { id: 'GB', label: '🇬🇧 UK' }, { id: 'US', label: '🇺🇸 USA' }, { id: 'ID', label: '🇮🇩 Indonesia' }, { id: '', label: '🌍 Worldwide' }];
@@ -21,7 +21,7 @@ export function Music() {
       <Header title="Music" subtitle="Internet radio, your music library and Spotify" />
       <Row title="Listen">
         <Card fk="mu:spotify" shape="logo" title="Spotify" sub="Open the app" icon="🎧" onSelect={() => launchApp('spotify')} />
-        <Card fk="mu:yt" shape="logo" title="YouTube Music" sub="Open in browser" icon="🎶" onSelect={() => api.launch.url('https://music.youtube.com/', { label: 'YouTube Music' })} />
+        <Card fk="mu:yt" shape="logo" title="YouTube Music" sub="Open in browser" icon="🎶" onSelect={() => launchSite('https://music.youtube.com/', 'YouTube Music')} />
       </Row>
       {!!recent.data?.length && <Row title="Recent Stations">{recent.data.map((h) => <Card key={h.ref} fk={`rs:${h.ref}`} shape="square" title={h.title} sub={h.sub} image={h.image} icon="📻" onSelect={() => playMedia({ type: 'audio', url: h.data?.url || h.ref, title: h.title, subtitle: h.sub, image: h.image, kind: 'station', ref: h.ref, isRadio: true, data: h.data })} />)}</Row>}
       {!!local.data?.length && <Row title="My Music" subtitle={`${local.data.length} tracks`}>{local.data.slice(0, 120).map((m) => <Card key={m.id} fk={`lm:${m.id}`} shape="square" title={m.title} sub={m.show} icon="🎵" onSelect={async () => playMedia(await localRequest(m))} />)}</Row>}

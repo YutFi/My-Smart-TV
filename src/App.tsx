@@ -7,8 +7,10 @@ import { PlayerHost } from './components/PlayerHost';
 import { Screensaver } from './components/Screensaver';
 import { FocusGlow } from './components/Effects';
 import { Splash } from './components/Splash';
+import { BootSplash } from './components/BootSplash';
 import { cancelSplash } from './lib/splash';
 import { configureSfx, initSfx, play } from './lib/sfx';
+import { initBattery } from './lib/battery';
 import { ProfilePicker } from './components/Profiles';
 import { PinPrompt } from './components/osk';
 import { Button, Modal } from './components/ui';
@@ -63,7 +65,26 @@ function PowerMenu({ onClose, onProfile }: { onClose: () => void; onProfile: () 
   );
 }
 
+// Wraps the app with the start-up intro: plays the chime once settings are known, keeps the intro up for at least
+// ~3 s (so the animation completes), then fades it out over the ready UI.
 export default function App() {
+  const { loaded, settings } = useApp();
+  const [boot, setBoot] = useState<'show' | 'fade' | 'gone'>('show');
+  const t0 = useRef(performance.now());
+  useEffect(() => {
+    if (!loaded) return;
+    if (!settings.bootSplash) { setBoot('gone'); return; }
+    if (settings.uiSounds) play('startup');
+    const wait = Math.max(300, 3100 - (performance.now() - t0.current));
+    const a = setTimeout(() => setBoot('fade'), wait);
+    const b = setTimeout(() => setBoot('gone'), wait + 800);
+    return () => { clearTimeout(a); clearTimeout(b); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
+  return (<><AppInner />{boot !== 'gone' && <BootSplash fading={boot === 'fade'} />}</>);
+}
+
+function AppInner() {
   const { settings, profile, profiles, loaded } = useApp();
   const [picking, setPicking] = useState(false);
   const [gate, setGate] = useState(false);
@@ -74,6 +95,7 @@ export default function App() {
   useEffect(() => {
     initNav();
     initSfx();
+    initBattery();
     setDefaultBack(() => nav.back());
     setDefaultHome(() => nav.go('home'));
     (async () => {
@@ -107,8 +129,6 @@ export default function App() {
 
   // UI sound settings + startup chime (once, after the first screen is ready)
   useEffect(() => { configureSfx({ enabled: settings.uiSounds, volume: settings.uiSoundVolume, sink: settings.audioDeviceId }); }, [settings.uiSounds, settings.uiSoundVolume, settings.audioDeviceId]);
-  const chimed = useRef(false);
-  useEffect(() => { if (loaded && !chimed.current) { chimed.current = true; setTimeout(() => play('startup'), 700); } }, [loaded]);
 
   // setup wizard completed/restarted → re-evaluate
   useEffect(() => { if (loaded) setNeedSetup(!settings.setupDone); }, [loaded, settings.setupDone]);

@@ -117,6 +117,13 @@ export function SiteTile({ it, fk, onKey }: { it: ListItem; fk: string; onKey?: 
   );
 }
 
+// Any other website launch gets the same splash + toast treatment.
+export async function launchSite(url: string, title: string) {
+  const r = await launchWithSplash({ title, ...splashColors(title) }, () => api.launch.url(url, { label: title }));
+  if (r.error === 'cancelled') return;
+  if (!r.ok) toast(r.error || 'Could not open the website', 'error');
+}
+
 export function GameCard({ g, fk, onSelect }: { g: Game; fk: string; onSelect?: () => void }) {
   const live = g.state === 'in';
   const team = (t: Game['home']) => (

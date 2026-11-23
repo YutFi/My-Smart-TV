@@ -3,6 +3,7 @@ import { api, type Game, type Title } from '../lib/api';
 import { nav, pid, useApp, useAsync, useLists, ratingAllowed, localRequest, playMedia, channelRequest, toast } from '../lib/app';
 import { Card, Row } from '../components/ui';
 import { Hero, type HeroSlide } from '../components/Hero';
+import { StatusWidget } from '../components/Battery';
 import { AppTile, GameCard, ListItemCard, PageScroll, SiteTile, SetupCard, TitleCard, launchApp, openListItem, openTitle } from '../components/content';
 import { STREAMING_APPS, type ListItem } from '../../shared/types';
 
@@ -33,7 +34,7 @@ export function Home() {
   const rows = settings.homeRows.filter((r) => !(kids && ['sports', 'apps', 'youtube'].includes(r)));
   return (
     <PageScroll>
-      <Hero slides={slides} />
+      <Hero slides={slides} extra={<StatusWidget />} />
       <div>
         {rows.map((id) => <HomeRow key={id} id={id} trending={trending} />)}
       </div>

@@ -15,10 +15,10 @@ export function Splash() {
   return (
     <div key={token} className="splash-root fixed inset-0 z-[95] flex flex-col items-center justify-center overflow-hidden" style={{ background: '#05060d' }}>
       <div className="splash-bg absolute inset-0" style={{ background: `radial-gradient(circle at 50% 48%, ${color}88 0%, ${color2}55 28%, #05060d 68%)` }} />
-      <div className="splash-bg2 absolute inset-[-20%]" style={{ background: `conic-gradient(from 0deg, transparent, ${color}33, transparent 30%, ${color2}33, transparent 60%, ${color}22, transparent)` }} />
+      <div className="splash-bg2 absolute inset-[-90%]" style={{ background: `conic-gradient(from 0deg, transparent, ${color}33, transparent 30%, ${color2}33, transparent 60%, ${color}22, transparent)` }} />
       {sparks.map((s, i) => <i key={i} className="splash-spark absolute rounded-full bg-white" style={{ left: `${s.x}%`, top: `${s.y}%`, width: `${s.s}rem`, height: `${s.s}rem`, animationDelay: `${s.d}s`, animationDuration: `${s.t}s` }} />)}
       <div className="absolute left-1/2 top-[46%]">
-        {streaks.map((s, i) => <b key={i} className="splash-streak absolute block h-[0.14rem] origin-left rounded-full" style={{ width: `${s.l}rem`, transform: `rotate(${s.a}deg)`, animationDelay: `${0.25 + s.d}s`, background: `linear-gradient(90deg, transparent, ${color}, #fff)` }} />)}
+        {streaks.map((s, i) => <b key={i} className="splash-streak absolute block h-[0.14rem] origin-left rounded-full" style={{ width: `${s.l}rem`, ['--a' as string]: `${s.a}deg`, animationDelay: `${0.25 + s.d}s`, background: `linear-gradient(90deg, transparent, ${color}, #fff)` }} />)}
       </div>
       <div className="relative flex h-[24rem] w-[24rem] items-center justify-center" style={{ marginTop: '-4rem' }}>
         {[0, 0.5, 1].map((d) => <i key={d} className="splash-ripple absolute inset-0 rounded-full border-2" style={{ borderColor: color, animationDelay: `${d}s` }} />)}

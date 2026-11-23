@@ -21,6 +21,6 @@ export async function launchWithSplash(info: SplashInfo, action: () => Promise<{
   const r = await action();
   if (!r.ok) { cancelSplash(); play('error'); return r; }
   play('launchDone');
-  setTimeout(() => { if (splashStore.get().token === token) cancelSplash(); }, 2600);
+  setTimeout(() => { if (splashStore.get().token === token) cancelSplash(); }, 4200); // stays up until the app's window covers the screen
   return r;
 }

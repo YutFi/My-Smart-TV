@@ -13,6 +13,7 @@ import * as sys from './services/system';
 import { log, logFile } from './services/log';
 import { fetchJson } from './services/bus';
 import { streamHeaders } from './services/stream';
+import { refreshBattery } from './services/battery';
 
 export const allowedFiles = new Set<string>();
 
@@ -243,6 +244,7 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
   handle('system:drives', () => sys.listDrives());
   handle('system:internet', () => sys.checkInternet());
   handle('system:keepAwake', (_e, on: boolean) => sys.keepAwake(on));
+  handle('system:battery', () => refreshBattery());
   handle('player:headers', (_e, ua: string, referrer: string) => { streamHeaders.ua = String(ua || '').slice(0, 300); streamHeaders.referrer = /^https?:\/\//i.test(referrer || '') ? referrer : ''; });
   handle('system:sleepPc', () => sys.sleepPc());
   handle('system:quit', () => { app.quit(); });

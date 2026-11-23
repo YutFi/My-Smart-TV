@@ -28,6 +28,7 @@ export interface SportDef { id: string; name: string; icon: string; news: string
 export interface NewsItem { title: string; link: string; desc: string; date: number; image: string }
 export interface YtVideo { id: string; title: string; channel: string; thumb: string }
 export interface Station { id: string; name: string; url: string; logo: string; tags: string; country: string; codec: string }
+export interface BatteryInfo { present: boolean; percent: number; charging: boolean; pluggedIn: boolean; minutes: number }
 export interface DriveInfo { letter: string; label: string; type: string; size: number; free: number }
 
 export const api = {
@@ -124,6 +125,7 @@ export const api = {
     internet: (): Promise<boolean> => inv('system:internet'),
     keepAwake: (on: boolean) => inv('system:keepAwake', on),
     streamHeaders: (ua: string, referrer: string) => inv('player:headers', ua, referrer),
+    battery: (): Promise<BatteryInfo> => inv('system:battery'),
     sleepPc: () => inv('system:sleepPc'),
     quit: () => inv('system:quit'),
     desktopMode: (on: boolean) => inv('system:desktopMode', on),

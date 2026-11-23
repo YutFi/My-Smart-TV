@@ -11,6 +11,7 @@ import { refreshAll } from './services/iptv';
 import { broadcast } from './services/bus';
 import { streamHeaders } from './services/stream';
 import { exit as exitGaming, restoreAfterCrash } from './services/gaming';
+import { startBattery } from './services/battery';
 
 const isDev = !app.isPackaged;
 const args = process.argv;
@@ -160,6 +161,7 @@ app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
   log.info(`Starting MY SMART TV ${app.getVersion()} (tvMode=${tvMode}, packaged=${app.isPackaged}, electron ${process.versions.electron})`);
   void restoreAfterCrash();
+  startBattery();
   installNetworkHooks();
   registerIpc({ applyDisplay, setDesktopMode });
   createWindow();

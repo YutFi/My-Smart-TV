@@ -7,6 +7,7 @@ import { appStore, channelRequest, pid, playMedia, playerStore, stopPlayer, toas
 import { useStore } from '../lib/store';
 import { pushScope, popScope, useKeys, focusFirst, type KeyEv } from '../lib/nav';
 import { Button, Focusable, Modal, Art } from './ui';
+import { BatteryBadge } from './Battery';
 import { fmtClock, fmtTime } from '../lib/format';
 import { cueAt, parseSubtitles, type Cue } from '../lib/subtitles';
 import type { Programme } from '../../shared/types';
@@ -419,7 +420,7 @@ function Player({ req }: { req: PlayRequest }) {
             </div>
             <div className="clamp-1 text-[2.4rem] font-bold text-shadow">{req.title}</div>
           </div>
-          <div className="text-right text-[1.2rem] text-[color:var(--muted)]">{fmtClock(Date.now())}</div>
+          <div className="flex items-center gap-[1rem] text-right text-[1.2rem] text-[color:var(--muted)]"><BatteryBadge />{fmtClock(Date.now())}</div>
         </div>
 
         {live ? (

@@ -63,6 +63,7 @@ function General() {
       <ToggleRow label="Animated backgrounds & effects" desc="Floating light particles, focus glow and shine effects. Turn off on slow PCs. They pause automatically during video and games." value={s.animatedBackground} onChange={(v) => updateSettings({ animatedBackground: v })} />
       <ToggleRow label="Sound effects" desc="Soft sounds when you move, select and go back, plus the startup chime and app launch whoosh." value={s.uiSounds} onChange={(v) => { updateSettings({ uiSounds: v }); if (v) setTimeout(() => play('select'), 80); }} />
       <SliderRow label="Sound effects volume" value={s.uiSoundVolume} min={0.1} max={1} step={0.1} fmt={(v) => `${Math.round(v * 100)}%`} onChange={(v) => { updateSettings({ uiSoundVolume: v }); setTimeout(() => play('select'), 80); }} />
+      <ToggleRow label="Start-up intro" desc="A short animated intro with the MY SMART TV logo and chime each time the app opens." value={s.bootSplash} onChange={(v) => updateSettings({ bootSplash: v })} />
       <ToggleRow label="App launch splash screen" desc="An animated splash in the app's colours (with sound) while Netflix, Nebula, YouTube and other apps open. Press Back to cancel." value={s.launchSplash} onChange={(v) => updateSettings({ launchSplash: v })} />
       <SettingRow label="Home screen rows" desc="Choose which rows appear on Home and their order." right="Customize ›" onSelect={() => setRows(true)} />
       <SectionTitle>Startup</SectionTitle>
