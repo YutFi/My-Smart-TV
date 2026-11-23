@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { playerStore, useApp } from '../lib/app';
 import { useStore } from '../lib/store';
+import { splashStore } from '../lib/splash';
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Ambient visual effects: a canvas of slowly drifting glow particles behind the UI, and a soft light that follows the
@@ -18,7 +19,8 @@ export function AmbientBackground() {
   const ref = useRef<HTMLCanvasElement>(null);
   const { req } = useStore(playerStore);
   const { settings } = useApp();
-  const on = settings.animatedBackground && !req;
+  const { info: splash } = useStore(splashStore);
+  const on = settings.animatedBackground && !req && !splash;
   useEffect(() => {
     if (!on) return;
     const cv = ref.current!; const ctx = cv.getContext('2d')!;

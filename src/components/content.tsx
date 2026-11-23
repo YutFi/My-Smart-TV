@@ -59,6 +59,14 @@ export async function openListItem(it: ListItem | HistoryItem, resume = true) {
     case 'youtube': openYoutubeVideo({ id: it.ref, title: it.title, thumb: it.image }); return;
     case 'station': playMedia({ type: 'audio', url: it.data?.url || it.ref, title: it.title, subtitle: it.sub, image: it.image, kind: 'station', ref: it.ref, isRadio: true, data: it.data }); return;
     case 'team': nav.go('sports'); return;
+    case 'uwp': {
+      api.launch.addRecent(pid(), `uwp:${it.ref}`).catch(() => undefined);
+      const r = await launchWithSplash({ title: it.title, ...splashColors(it.title) }, () => api.launch.shellApp(it.ref));
+      if (r.error === 'cancelled') return;
+      if (!r.ok) toast(r.error || 'Could not open the app', 'error');
+      else toast(`Opening ${it.title}… click ⌂ MY SMART TV (top-left) to come back`, 'info', 5000);
+      return;
+    }
     case 'exe': {
       api.launch.addRecent(pid(), `exe:${it.ref}`).catch(() => undefined);
       const r = await launchWithSplash({ title: it.title, gaming: true, ...splashColors(it.title) }, () => api.launch.exe(it.ref, it.title));
@@ -102,16 +110,16 @@ export function AppTile({ app, fk, autoFocus }: { app: (typeof STREAMING_APPS)[n
 // Tile for a website the user added (Apps → Add a website). Same look as the app tiles, colored from the name.
 export function SiteTile({ it, fk, onKey }: { it: ListItem; fk: string; onKey?: (e: any) => boolean | void }) {
   let h = 0; for (let i = 0; i < it.title.length; i++) h = (h * 31 + it.title.charCodeAt(i)) % 360;
-  const isExe = it.kind === 'exe';
+  const isExe = it.kind === 'exe' || it.kind === 'uwp';
   let host = ''; try { host = isExe ? 'Windows app' : new URL(it.ref).host.replace(/^www\./, ''); } catch { /* ignore */ }
   const [icon, setIcon] = useState('');
-  useEffect(() => { if (isExe) api.launch.icon(it.ref).then(setIcon).catch(() => undefined); }, [isExe, it.ref]);
+  useEffect(() => { if (it.kind === 'exe') api.launch.icon(it.ref).then(setIcon).catch(() => undefined); }, [it.kind, it.ref]);
   return (
     <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
       <Focusable fk={fk} onSelect={() => openListItem(it)} onKey={onKey} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, hsl(${h} 65% 42%), hsl(${(h + 40) % 360} 70% 18%))` }}>
         {icon && <img src={icon} alt="" className="mr-[0.4rem] h-[3rem] w-[3rem] drop-shadow-lg" draggable={false} />}
         <span className="clamp-2 px-[0.6rem] text-center text-[1.5rem] font-black leading-tight tracking-tight text-white drop-shadow-lg">{it.title}</span>
-        <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">{isExe ? '🖥' : '🌐'} {host}</span>
+        <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">{it.kind === 'uwp' ? '🧩' : isExe ? '🖥' : '🌐'} {host}</span>
       </Focusable>
     </div>
   );

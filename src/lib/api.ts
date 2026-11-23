@@ -112,11 +112,23 @@ export const api = {
     nativeApps: (): Promise<Record<string, { path: string; icon: string }>> => inv('apps:native'),
     icon: (p: string): Promise<string> => inv('apps:icon', p),
     pickProgram: (): Promise<string | null> => inv('dialog:program'),
+    shellApp: (id: string): Promise<{ ok: boolean; error?: string }> => inv('launch:shellapp', id),
+    store: (q?: string) => inv('launch:store', q),
     home: () => inv('launch:home'),
     browsers: (): Promise<{ edge: string; chrome: string; vlc: string }> => inv('launch:browsers'),
     recents: (pid: number): Promise<string[]> => inv('recents:apps', pid),
     addRecent: (pid: number, id: string) => inv('recents:add', pid, id),
     external: (url: string) => inv('open:external', url),
+  },
+  spicetify: {
+    status: (): Promise<{ spotifyInstalled: boolean; installed: boolean; theme: string }> => inv('spicetify:status'),
+    install: (scheme: string): Promise<{ ok: boolean; error?: string }> => inv('spicetify:install', scheme),
+    restore: (): Promise<{ ok: boolean; error?: string }> => inv('spicetify:restore'),
+    openSpotify: (): Promise<boolean> => inv('spicetify:open'),
+  },
+  apps: {
+    installed: (): Promise<{ name: string; appId: string }[]> => inv('apps:installed'),
+    discover: (): Promise<{ name: string; appId: string; builtin?: string }[]> => inv('apps:discover'),
   },
   display: { list: (): Promise<DisplayInfo[]> => inv('display:list') },
   system: {

@@ -19,8 +19,8 @@
 :root[data-theme='midnight'] { --bg0: #02040a; --bg1: #070a18; --bg2: #0c1230; --purple: #6366f1; }
 :root[data-theme='oled'] { --bg0: #000; --bg1: #000; --bg2: #0b0b12; }
 
-/* 1rem == 16px at 1080p; the whole UI scales with the screen height so 1080p and 4K look identical. */
-html { font-size: calc(var(--ui) * 100vh / 67.5); }
+/* 1rem == 16px at 1080p (16:9). The UI scales with the smaller of screen height/width, so 1080p, 4K, 3:2 tablets and ultrawides all fit. */
+html { font-size: calc(var(--ui) * min(100vh / 67.5, 100vw / 120)); }
 html, body, #root { height: 100%; margin: 0; overflow: hidden; background: var(--bg0); color: var(--text); font-family: 'Segoe UI Variable Display', 'Segoe UI', Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; user-select: none; }
 html.hide-cursor, html.hide-cursor * { cursor: none !important; }
 * { box-sizing: border-box; scrollbar-width: none; }
@@ -95,23 +95,26 @@ input[type='range'] { accent-color: var(--purple); }
 @keyframes splashRipple { 0% { opacity: 0.7; transform: scale(0.55); } 100% { opacity: 0; transform: scale(1.9); } }
 @keyframes splashSpin { to { transform: rotate(360deg); } }
 @keyframes splashStreak { 0% { opacity: 0; transform: rotate(var(--a)) translateX(6rem) scaleX(0.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateX(34rem) scaleX(1); } }
-@keyframes letterIn { from { opacity: 0; transform: translateY(1.4rem) scale(0.7); filter: blur(0.7rem); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes letterIn { from { opacity: 0; transform: translate3d(0, 1.4rem, 0) scale(0.7); } to { opacity: 1; transform: none; } }
+@keyframes splashBarX { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @keyframes splashSpark { 0%, 100% { opacity: 0; transform: scale(0.3); } 50% { opacity: 0.9; transform: scale(1); } }
 @keyframes splashBar { from { width: 0; } to { width: 100%; } }
 @keyframes splashRise { from { opacity: 0; transform: translateY(1.6rem); letter-spacing: 0.3em; } to { opacity: 1; transform: none; } }
 @keyframes splashBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 .splash-root { animation: splashIn 0.35s ease both; }
 .splash-bg { animation: splashBreathe 3.4s ease-in-out infinite; }
-.splash-bg2 { animation: splashSpin 14s linear infinite; opacity: 0.8; }
+.splash-bg2 { animation: splashSpin 22s linear infinite; opacity: 0.8; }
 .splash-logo { animation: splashPop 0.8s cubic-bezier(0.2, 0.9, 0.25, 1.2) 0.1s both; }
 .splash-ring { animation: splashSpin 1.8s linear infinite; }
 .splash-ripple { animation: splashRipple 2.2s ease-out infinite; }
 .splash-spark { animation: splashSpark 2s ease-in-out infinite; box-shadow: 0 0 0.8rem #fff; }
 .splash-streak { animation: splashStreak 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) infinite; opacity: 0; }
-.splash-bar { animation: splashBar 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.splash-bar { animation: splashBarX 2.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: left; will-change: transform; }
 .boot-letter { display: inline-block; animation: letterIn 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 .boot-tag { animation: splashRise 0.9s ease 2s both; }
-.boot-bar { animation: splashBar 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.boot-bar { animation: splashBarX 2.8s cubic-bezier(0.4, 0, 0.2, 1) forwards; transform-origin: left; will-change: transform; }
+.splash-bg, .splash-bg2, .splash-ring, .splash-ripple, .splash-logo, .splash-streak, .splash-spark, .boot-letter { will-change: transform, opacity; backface-visibility: hidden; }
+.splash-root, .boot-root { contain: layout paint; }
 .splash-title { animation: splashRise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) 0.45s both; }
 .splash-chip { animation: glowPulse 2s ease-in-out infinite; }
 .splash-shine { background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.45) 48%, transparent 66%); transform: translateX(-130%); animation: shine 1.3s ease 0.7s 2 both; }

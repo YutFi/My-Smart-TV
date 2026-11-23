@@ -174,7 +174,9 @@ app.whenReady().then(async () => {
   // HDMI hot-plug handling
   screen.on('display-added', () => { log.info('Display added'); setTimeout(applyDisplay, 800); });
   screen.on('display-removed', () => { log.info('Display removed'); setTimeout(applyDisplay, 800); });
-  screen.on('display-metrics-changed', () => { broadcast('display:changed', {}); });
+  // resolution / scaling / refresh changes: refit the window to the TV so nothing is cropped or letterboxed
+  let metricsTimer: NodeJS.Timeout | undefined;
+  screen.on('display-metrics-changed', () => { broadcast('display:changed', {}); clearTimeout(metricsTimer); metricsTimer = setTimeout(() => { if (win && !desktopMode && win.isFullScreen()) applyDisplay(); }, 700); });
 
   // keep playlists fresh in the background
   if (!SHOT) {

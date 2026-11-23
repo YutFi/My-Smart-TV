@@ -17,7 +17,7 @@ import type { Profile } from '../../shared/types';
 const SECTIONS = [
   { id: 'general', label: 'General', icon: '🎛️' }, { id: 'profiles', label: 'Profiles', icon: '👤' }, { id: 'display', label: 'Display', icon: '🖥️' },
   { id: 'audio', label: 'Audio', icon: '🔊' }, { id: 'live', label: 'Live TV', icon: '📺' }, { id: 'player', label: 'Player', icon: '▶️' },
-  { id: 'network', label: 'Network', icon: '🌐' }, { id: 'parental', label: 'Parental Control', icon: '🔒' }, { id: 'system', label: 'System', icon: '⚙️' },
+  { id: 'network', label: 'Network', icon: '🌐' }, { id: 'spotify', label: 'Spotify', icon: '🎧' }, { id: 'parental', label: 'Parental Control', icon: '🔒' }, { id: 'system', label: 'System', icon: '⚙️' },
 ];
 
 let parentalUnlocked = false;
@@ -41,7 +41,7 @@ export function Settings() {
         </aside>
         <section className="min-w-0 flex-1 pb-[2rem]">
           {section === 'general' && <General />}{section === 'profiles' && <Profiles />}{section === 'display' && <Display />}{section === 'audio' && <AudioSettings />}
-          {section === 'live' && <LiveSettings />}{section === 'player' && <PlayerSettings />}{section === 'network' && <Network />}{section === 'parental' && <Parental />}{section === 'system' && <System />}
+          {section === 'live' && <LiveSettings />}{section === 'player' && <PlayerSettings />}{section === 'network' && <Network />}{section === 'spotify' && <SpotifySettings />}{section === 'parental' && <Parental />}{section === 'system' && <System />}
         </section>
       </div>
       {needPin && <PinPrompt title="Parental PIN" onClose={() => setNeedPin(false)} onVerify={async (p) => { if (await api.parental.verify(p)) { parentalUnlocked = true; setSection('parental'); return true; } return false; }} />}
@@ -232,6 +232,8 @@ function Network() {
       <TextField label="YouTube Data API key (optional)" mask value={s.youtubeKey} placeholder="Enables in-app YouTube search & trending" onChange={(v) => updateSettings({ youtubeKey: v }).then(() => toast('YouTube key saved', 'ok'))} />
       <SectionTitle>Streaming</SectionTitle>
       <ChoiceRow label="Browser for streaming apps" desc="Netflix, Disney+, Prime Video etc. need a DRM-capable browser." value={s.browser} onChange={(v) => updateSettings({ browser: v })} options={[{ value: 'auto', label: 'Automatic (Edge, then Chrome)' }, { value: 'edge', label: 'Microsoft Edge' }, { value: 'chrome', label: 'Google Chrome' }, { value: 'default', label: 'Windows default browser' }]} />
+      <ToggleRow label="Add new streaming apps automatically" desc="Streaming and entertainment apps you install (Netflix, Disney+, Plex, VLC, Spotify and others) are added to Apps and Home by themselves." value={s.autoAddApps} onChange={(v) => updateSettings({ autoAddApps: v })} />
+      <SettingRow label="Microsoft Store" desc="Browse and install apps." right="Open ›" onSelect={() => api.launch.store()} />
       <SettingRow label="Ad blocker for streaming apps & websites" desc="Opens the streaming browser with its toolbar so you can add a blocker such as uBlock Origin from the Edge Add-ons store (click “Get”). It then works in every app and website you open from MY SMART TV." right="Open store ›" onSelect={() => api.launch.browserSetup('https://microsoftedge.microsoft.com/addons/search/ublock').then((r) => { if (!r.ok) toast(r.error || 'Could not open the browser', 'error'); })} />
       <SettingRow label="Browser profile (sign-ins & extensions)" desc="Opens the streaming browser normally so you can sign in to sites or manage extensions." right="Open ›" onSelect={() => api.launch.browserSetup('https://www.bing.com/').then((r) => { if (!r.ok) toast(r.error || 'Could not open the browser', 'error'); })} />
       <ChoiceRow label="Region" desc="Used for trending, availability and radio." value={s.region} onChange={(v) => updateSettings({ region: v })} options={[['MY', 'Malaysia'], ['SG', 'Singapore'], ['ID', 'Indonesia'], ['TH', 'Thailand'], ['PH', 'Philippines'], ['IN', 'India'], ['GB', 'United Kingdom'], ['US', 'United States'], ['AU', 'Australia']].map(([value, label]) => ({ value, label }))} />
@@ -297,3 +299,49 @@ function System() {
   );
 }
 
+
+const SCHEME_LABELS: Record<string, string> = { Deep: 'Deep (blue-violet — matches MY SMART TV)', Deeper: 'Deeper (darker blue)', UltraBlack: 'Ultra black (OLED)', Cherry: 'Cherry (red)', Coral: 'Coral (warm)', Wealthy: 'Wealthy (gold)', Greener: 'Greener', Nord: 'Nord (cool grey)' };
+
+// Optional Spotify customisation (Spicetify + Marketplace + the Sleek theme). Never automatic: the user must agree first.
+function SpotifySettings() {
+  const st = useAsync(() => api.spicetify.status(), []);
+  const [scheme, setScheme] = useState('Deep');
+  const [ask, setAsk] = useState(false);
+  const [askRestore, setAskRestore] = useState(false);
+  const [prog, setProg] = useState<{ pct: number; message: string; error?: boolean; done?: boolean } | null>(null);
+  useEffect(() => api.on('spicetify:progress', (p) => { setProg(p); if (p.done || p.error) st.reload(); }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const s = st.data;
+  return (
+    <div className={col}>
+      <SectionTitle>Spotify customisation (optional)</SectionTitle>
+      <div className="rounded-xl bg-white/5 px-[1.4rem] py-[1rem] text-[1.1rem] leading-relaxed text-white/75">
+        Adds <b>Spicetify</b> (open source) to the Spotify desktop app, with its in-app <b>Marketplace</b> for themes and extensions and the polished <b>Sleek</b> theme. Nothing is installed unless you choose it here.
+        <div className="mt-[0.4rem] text-[0.95rem] text-white/50">Spotify Premium or free works as normal. MY SMART TV does not add ad blocking — that would bypass Spotify’s ads and subscription.</div>
+      </div>
+      {st.loading ? <Loading /> : s && (
+        <>
+          <SettingRow label="Spotify for Windows" desc={s.spotifyInstalled ? 'Found.' : 'Not found. Install the desktop app from spotify.com/download (the Microsoft Store version can’t be customised), sign in once, then come back.'} right={s.spotifyInstalled ? '✓ installed' : 'Get Spotify ›'} onSelect={() => { if (!s.spotifyInstalled) api.launch.external('https://www.spotify.com/download/windows/'); }} />
+          <SettingRow label="Spicetify + Marketplace" desc={s.installed ? `Installed${s.theme ? ' — theme: ' + s.theme : ''}. Open Spotify and look for “Marketplace” in the sidebar to browse more themes and extensions.` : 'Not installed.'} right={s.installed ? '✓ installed' : ''} />
+          <ChoiceRow label="Theme colour scheme" desc="Sleek is installed; you can change schemes or add other themes later from the Marketplace." value={scheme} onChange={setScheme} options={Object.keys(SCHEME_LABELS).map((k) => ({ value: k, label: SCHEME_LABELS[k] }))} />
+          <Button primary disabled={!s.spotifyInstalled} icon="✨" onSelect={() => setAsk(true)}>{s.installed ? 'Re-apply Spicetify, Marketplace & theme' : 'Install Spicetify, Marketplace & theme'}</Button>
+          <div className="flex gap-[0.8rem]">
+            <Button icon="🎧" disabled={!s.spotifyInstalled} onSelect={() => api.spicetify.openSpotify()}>Open Spotify</Button>
+            {s.installed && <Button onSelect={() => setAskRestore(true)}>Restore Spotify to original</Button>}
+          </div>
+        </>
+      )}
+      {ask && (
+        <Confirm title="Install Spicetify?" confirmLabel="Yes, install" onClose={() => setAsk(false)} onConfirm={() => { setProg({ pct: 1, message: 'Starting…' }); api.spicetify.install(scheme); }}
+          message="MY SMART TV will download Spicetify, the Marketplace and the Sleek theme from GitHub (checked against their published checksums), close Spotify, patch the Spotify desktop app, and start it again. This modifies Spotify’s own program files, which Spotify’s terms don’t formally allow, and a Spotify update can undo it (just run this again). You can restore Spotify to its original state here at any time." />
+      )}
+      {askRestore && <Confirm title="Restore Spotify?" confirmLabel="Restore" onClose={() => setAskRestore(false)} onConfirm={async () => { const r = await api.spicetify.restore(); toast(r.ok ? 'Spotify restored to its original state' : r.error || 'Restore failed', r.ok ? 'ok' : 'error', 6000); st.reload(); }} message="Spotify will be closed, returned to its original (unmodified) state and restarted. The Marketplace and theme will disappear until you install them again." />}
+      {prog && (
+        <Modal title="Setting up Spotify" onClose={() => { if (prog.done || prog.error) setProg(null); }} width={48} footer={(prog.done || prog.error) ? <Button autoFocus primary onSelect={() => setProg(null)}>Close</Button> : undefined}>
+          <div className="mb-[0.8rem] text-[1.25rem]">{prog.error ? '⚠️ ' : prog.done ? '✅ ' : ''}{prog.message}</div>
+          <div className="h-[0.6rem] overflow-hidden rounded-full bg-white/15"><i className="block h-full rounded-full bg-gradient-to-r from-accent-purple to-accent-cyan transition-all duration-500" style={{ width: `${prog.error ? 100 : prog.pct}%`, background: prog.error ? '#ef4444' : undefined }} /></div>
+          {!prog.done && !prog.error && <div className="mt-[0.8rem] text-[1rem] text-white/45">Please wait — Spotify will close and reopen.</div>}
+        </Modal>
+      )}
+    </div>
+  );
+}

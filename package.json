@@ -1,7 +1,7 @@
 {
     "name": "my-smart-tv",
     "productName": "MY SMART TV",
-    "version": "1.5.0",
+    "version": "1.6.0",
     "description": "Turn your Windows PC into a Smart TV box over HDMI.",
     "author": "MY SMART TV",
     "private": true,

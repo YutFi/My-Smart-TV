@@ -14,6 +14,8 @@ import { log, logFile } from './services/log';
 import { fetchJson } from './services/bus';
 import { streamHeaders } from './services/stream';
 import { refreshBattery } from './services/battery';
+import * as appsSvc from './services/apps';
+import * as spicetify from './services/spicetify';
 
 export const allowedFiles = new Set<string>();
 
@@ -212,6 +214,8 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     if (!a) throw new Error('Unknown app');
     run('INSERT INTO recent_apps(profile_id,app_id,opened) VALUES (?,?,?) ON CONFLICT(profile_id,app_id) DO UPDATE SET opened=excluded.opened', pid, appId, Date.now());
     if (a.protocol && launcher.launchProtocol(a.protocol)) return { ok: true, via: 'app' };
+    const native = loadSettings().nativeApps?.[a.id];
+    if (native) { const r = launcher.launchShell(native); if (r.ok) return { ...r, via: 'windows-app' }; }
     const preferWeb = a.id === 'nebula' && loadSettings().nebulaMode === 'web';
     const found = preferWeb ? undefined : (a.exe || []).find((p) => { try { return fs.existsSync(p); } catch { return false; } });
     if (found) return { ...(await launcher.launchNative(found, { label: a.name, gaming: a.gaming, fullscreen: a.fullscreen })), via: 'desktop' };
@@ -230,6 +234,14 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
     return out;
   });
   handle('apps:icon', async (_e, p: string) => { try { return (await app.getFileIcon(String(p), { size: 'large' })).toDataURL(); } catch { return ''; } });
+  handle('spicetify:status', () => spicetify.status());
+  handle('spicetify:install', (_e, scheme: string) => spicetify.install(String(scheme)));
+  handle('spicetify:restore', () => spicetify.restore());
+  handle('spicetify:open', () => spicetify.openSpotify());
+  handle('apps:installed', () => appsSvc.listInstalledApps());
+  handle('apps:discover', () => appsSvc.discoverMediaApps());
+  handle('launch:shellapp', (_e, id: string) => launcher.launchShell(String(id)));
+  handle('launch:store', (_e, q?: string) => appsSvc.openStore(q ? String(q).slice(0, 80) : undefined));
   handle('launch:vlc', (_e, target: string) => launcher.openInVlc(target));
   handle('launch:browserSetup', (_e, url: string) => launcher.openBrowserSetup(url));
   handle('launch:home', () => launcher.bringTvToFront('manual'));

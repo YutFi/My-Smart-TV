@@ -3,7 +3,6 @@ import { api, type Game, type Title } from '../lib/api';
 import { nav, pid, useApp, useAsync, useLists, ratingAllowed, localRequest, playMedia, channelRequest, toast } from '../lib/app';
 import { Card, Row } from '../components/ui';
 import { Hero, type HeroSlide } from '../components/Hero';
-import { StatusWidget } from '../components/Battery';
 import { AppTile, GameCard, ListItemCard, PageScroll, SiteTile, SetupCard, TitleCard, launchApp, openListItem, openTitle } from '../components/content';
 import { STREAMING_APPS, type ListItem } from '../../shared/types';
 
@@ -34,7 +33,7 @@ export function Home() {
   const rows = settings.homeRows.filter((r) => !(kids && ['sports', 'apps', 'youtube'].includes(r)));
   return (
     <PageScroll>
-      <Hero slides={slides} extra={<StatusWidget />} />
+      <Hero slides={slides} />
       <div>
         {rows.map((id) => <HomeRow key={id} id={id} trending={trending} />)}
       </div>
@@ -137,7 +136,7 @@ function AppsRow() {
   return (
     <Row title="Apps & Websites" subtitle={data?.recents.length ? 'Recently opened first' : data?.sites.length ? 'Including your websites and Windows apps' : undefined}>
       {entries.map((e) => (e.app ? <AppTile key={e.key} app={e.app} fk={`app:${e.key}`} /> : <SiteTile key={e.key} it={e.site!} fk={`app:${e.key}`} />))}
-      <SetupCard fk="app:add" icon="＋" title="Add a website" text="Put any streaming site or web app on your Home screen." action="Open Apps" onSelect={() => nav.go('apps')} />
+      <SetupCard fk="app:store" icon="🛍" title="Get more apps" text="Open the Microsoft Store — streaming apps you install are added here automatically. You can also add any website or program." action="Microsoft Store" onSelect={() => { api.launch.store(); toast('Opening the Microsoft Store…', 'info', 3000); }} />
     </Row>
   );
 }

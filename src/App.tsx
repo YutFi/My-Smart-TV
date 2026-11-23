@@ -11,6 +11,7 @@ import { BootSplash } from './components/BootSplash';
 import { cancelSplash } from './lib/splash';
 import { configureSfx, initSfx, play } from './lib/sfx';
 import { initBattery } from './lib/battery';
+import { syncApps } from './lib/appsync';
 import { ProfilePicker } from './components/Profiles';
 import { PinPrompt } from './components/osk';
 import { Button, Modal } from './components/ui';
@@ -81,7 +82,10 @@ export default function App() {
     return () => { clearTimeout(a); clearTimeout(b); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded]);
-  return (<><AppInner />{boot !== 'gone' && <BootSplash fading={boot === 'fade'} />}</>);
+  // mount the heavy UI a beat after the intro starts so the first intro frames are perfectly smooth
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setMounted(true), 450); return () => clearTimeout(t); }, []);
+  return (<>{mounted && <AppInner />}{boot !== 'gone' && <BootSplash fading={boot === 'fade'} />}</>);
 }
 
 function AppInner() {
@@ -113,8 +117,11 @@ function AppInner() {
     window.addEventListener('online', online); window.addEventListener('offline', offline);
     const t = setInterval(() => api.system.internet().then((o) => appStore.set({ online: o })).catch(() => undefined), 60000);
     api.system.internet().then((o) => appStore.set({ online: o })).catch(() => undefined);
-    const off = api.on('tv:foreground', () => { window.focus(); cancelSplash(); play('wake'); });
-    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); clearInterval(t); off(); };
+    const off = api.on('tv:foreground', () => { window.focus(); cancelSplash(); play('wake'); setTimeout(() => syncApps(), 1500); });
+    const onFocus = () => { syncApps(); };
+    window.addEventListener('focus', onFocus);
+    const syncTimer = setInterval(() => syncApps(), 120000);
+    return () => { window.removeEventListener('online', online); window.removeEventListener('offline', offline); clearInterval(t); clearInterval(syncTimer); window.removeEventListener('focus', onFocus); off(); };
   }, []);
 
   // ---- apply display settings ----
@@ -129,6 +136,9 @@ function AppInner() {
 
   // UI sound settings + startup chime (once, after the first screen is ready)
   useEffect(() => { configureSfx({ enabled: settings.uiSounds, volume: settings.uiSoundVolume, sink: settings.audioDeviceId }); }, [settings.uiSounds, settings.uiSoundVolume, settings.audioDeviceId]);
+
+  // first scan for installed streaming apps shortly after a profile is active
+  useEffect(() => { if (!profile) return; const t = setTimeout(() => syncApps(true), 4000); return () => clearTimeout(t); }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // setup wizard completed/restarted → re-evaluate
   useEffect(() => { if (loaded) setNeedSetup(!settings.setupDone); }, [loaded, settings.setupDone]);

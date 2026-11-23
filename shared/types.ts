@@ -42,6 +42,9 @@ export interface Settings {
   uiSounds: boolean;
   uiSoundVolume: number;
   launchSplash: boolean;
+  autoAddApps: boolean;
+  nativeApps: Record<string, string>; // built-in tile id -> installed Windows app id
+  dismissedApps: string[];
   bootSplash: boolean;
   nebulaMode: 'desktop' | 'web';
   animatedBackground: boolean;
@@ -92,6 +95,9 @@ export const DEFAULT_SETTINGS: Settings = {
   uiSounds: true,
   uiSoundVolume: 0.6,
   launchSplash: true,
+  autoAddApps: true,
+  nativeApps: {},
+  dismissedApps: [],
   bootSplash: true,
   nebulaMode: 'desktop',
   animatedBackground: true,

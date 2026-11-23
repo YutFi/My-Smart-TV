@@ -7,6 +7,7 @@ import { log } from './log';
 import { broadcast } from './bus';
 import { getTargetDisplay } from './system';
 import { enter as enterGaming, exit as exitGaming } from './gaming';
+import { launchShellApp } from './apps';
 import { currentBattery, onBattery, type BatteryInfo } from './battery';
 import FULLSCREEN_PS from '../ps/fullscreen.ps1';
 
@@ -212,6 +213,17 @@ export function openBrowserSetup(url: string): { ok: boolean; error?: string } {
   setTimeout(() => { if (w && !w.isDestroyed()) w.minimize(); }, 900);
   showReturnButton();
   return { ok: true };
+}
+
+// Start-menu / Microsoft Store app: MY SMART TV steps aside and the floating pill brings the user back.
+export function launchShell(appId: string): { ok: boolean; error?: string } {
+  const r = launchShellApp(appId);
+  if (!r.ok) return r;
+  if (child && child.pid) { execFile('taskkill', ['/PID', String(child.pid), '/T', '/F'], () => undefined); child = null; }
+  const w = getMainWindow();
+  setTimeout(() => { if (w && !w.isDestroyed()) w.minimize(); }, 1800);
+  showReturnButton();
+  return r;
 }
 
 export function launchProtocol(uri: string): boolean {
