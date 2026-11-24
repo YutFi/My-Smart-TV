@@ -5,6 +5,7 @@ import { channelRequest, localRequest, nav, pid, playMedia, toast } from '../lib
 import { STREAMING_APPS, type HistoryItem, type ListItem } from '../../shared/types';
 import { fmtClock, fmtDay } from '../lib/format';
 import { launchWithSplash } from '../lib/splash';
+import { openTileMenu } from '../lib/tiles';
 
 export const openTitle = (t: { kind: 'movie' | 'tv'; id: number }) => nav.push('title', { kind: t.kind, id: t.id });
 
@@ -97,7 +98,7 @@ export function AppTile({ app, fk, autoFocus }: { app: (typeof STREAMING_APPS)[n
   const native = useNativeApps()[app.id];
   return (
     <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
-      <Focusable fk={fk} autoFocus={autoFocus} onSelect={() => launchApp(app.id)} className="f-card relative flex items-center justify-center gap-[0.6rem] overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, ${app.color}, ${app.color2})` }}>
+      <Focusable fk={fk} tile autoFocus={autoFocus} onSelect={() => launchApp(app.id)} onKey={(e) => { if (e.k === 'menu') { openTileMenu({ title: app.name, kind: 'builtin', id: app.id, open: () => launchApp(app.id) }); return true; } }} className="f-card relative flex items-center justify-center gap-[0.6rem] overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, ${app.color}, ${app.color2})` }}>
         {native?.icon && <img src={native.icon} alt="" className="h-[3.2rem] w-[3.2rem] drop-shadow-lg" draggable={false} />}
         <span className="px-[0.4rem] text-center text-[1.75rem] font-black leading-none tracking-tight text-white drop-shadow-lg">{app.text}</span>
         {native && <span className="absolute left-[0.6rem] top-[0.5rem] rounded bg-black/45 px-[0.4rem] py-[0.05rem] text-[0.7rem] font-bold text-white/90">🖥 DESKTOP APP</span>}
@@ -116,7 +117,7 @@ export function SiteTile({ it, fk, onKey }: { it: ListItem; fk: string; onKey?: 
   useEffect(() => { if (it.kind === 'exe') api.launch.icon(it.ref).then(setIcon).catch(() => undefined); }, [it.kind, it.ref]);
   return (
     <div className="shrink-0 px-[0.55rem] py-[0.9rem]" style={{ width: '15.1rem' }}>
-      <Focusable fk={fk} onSelect={() => openListItem(it)} onKey={onKey} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, hsl(${h} 65% 42%), hsl(${(h + 40) % 360} 70% 18%))` }}>
+      <Focusable fk={fk} tile onSelect={() => openListItem(it)} onKey={(e) => { if (e.k === 'menu') { openTileMenu({ title: it.title, kind: it.kind as 'site' | 'exe' | 'uwp', id: it.ref, item: it, open: () => openListItem(it) }); return true; } return onKey?.(e); }} className="f-card relative flex items-center justify-center overflow-hidden rounded-[1rem]" style={{ width: '14rem', height: '8.4rem', background: `linear-gradient(135deg, hsl(${h} 65% 42%), hsl(${(h + 40) % 360} 70% 18%))` }}>
         {icon && <img src={icon} alt="" className="mr-[0.4rem] h-[3rem] w-[3rem] drop-shadow-lg" draggable={false} />}
         <span className="clamp-2 px-[0.6rem] text-center text-[1.5rem] font-black leading-tight tracking-tight text-white drop-shadow-lg">{it.title}</span>
         <span className="absolute bottom-[0.45rem] left-[0.7rem] text-[0.75rem] font-semibold text-white/70">{it.kind === 'uwp' ? '🧩' : isExe ? '🖥' : '🌐'} {host}</span>

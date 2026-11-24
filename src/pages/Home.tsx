@@ -5,6 +5,8 @@ import { Card, Row } from '../components/ui';
 import { Hero, type HeroSlide } from '../components/Hero';
 import { AppTile, GameCard, ListItemCard, PageScroll, SiteTile, SetupCard, TitleCard, launchApp, openListItem, openTitle } from '../components/content';
 import { STREAMING_APPS, type ListItem } from '../../shared/types';
+import { useStore } from '../lib/store';
+import { tilesStore } from '../lib/tiles';
 
 function useTitles(kind: 'movie' | 'tv', which: string, maxRating?: string) {
   const { data } = useAsync(async () => ((await api.tmdb.status()).hasKey ? await api.tmdb.list(kind, which, { maxRating }) : null), [kind, which, maxRating]);
@@ -124,15 +126,17 @@ function SportsRow() {
 
 // Apps and websites together: recently opened first, then your own websites, then the built-in services.
 function AppsRow() {
-  const { data } = useAsync(async () => ({ recents: await api.launch.recents(pid()), sites: await api.lists.get(pid(), 'sites') }), []);
+  const hidden = useApp().settings.hiddenApps;
+  const { version } = useStore(tilesStore);
+  const { data } = useAsync(async () => ({ recents: await api.launch.recents(pid()), sites: await api.lists.get(pid(), 'sites') }), [version]);
   type Entry = { key: string; app?: (typeof STREAMING_APPS)[number]; site?: ListItem };
   const entries: Entry[] = [];
   const seen = new Set<string>();
   const push = (e: Entry) => { if (!seen.has(e.key)) { seen.add(e.key); entries.push(e); } };
   const siteByRef = new Map((data?.sites || []).map((s) => [`${s.kind}:${s.ref}`, s]));
-  for (const id of data?.recents || []) { const a = STREAMING_APPS.find((x) => x.id === id); if (a) push({ key: a.id, app: a }); else if (siteByRef.has(id)) push({ key: id, site: siteByRef.get(id) }); }
+  for (const id of data?.recents || []) { const a = STREAMING_APPS.find((x) => x.id === id); if (a) { if (!hidden.includes(a.id)) push({ key: a.id, app: a }); } else if (siteByRef.has(id)) push({ key: id, site: siteByRef.get(id) }); }
   for (const s of data?.sites || []) push({ key: `${s.kind}:${s.ref}`, site: s });
-  for (const a of STREAMING_APPS) push({ key: a.id, app: a });
+  for (const a of STREAMING_APPS) if (!hidden.includes(a.id)) push({ key: a.id, app: a });
   return (
     <Row title="Apps & Websites" subtitle={data?.recents.length ? 'Recently opened first' : data?.sites.length ? 'Including your websites and Windows apps' : undefined}>
       {entries.map((e) => (e.app ? <AppTile key={e.key} app={e.app} fk={`app:${e.key}`} /> : <SiteTile key={e.key} it={e.site!} fk={`app:${e.key}`} />))}

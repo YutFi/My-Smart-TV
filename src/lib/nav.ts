@@ -277,7 +277,11 @@ export function initNav() {
   window.addEventListener('pointermove', onPointerMove, { passive: true });
   window.addEventListener('pointerdown', markActive, { passive: true });
   // Phone remotes / air mice: right-click (or the mouse "back" button) acts as Back
-  window.addEventListener('contextmenu', (e) => { e.preventDefault(); dispatchKey('back'); });
+  window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const tile = (e.target as HTMLElement | null)?.closest?.('[data-tile]') as HTMLElement | null;
+    if (tile) { tile.focus({ preventScroll: true }); dispatchKey('menu'); } else dispatchKey('back');
+  });
   window.addEventListener('mouseup', (e) => { if (e.button === 3) { e.preventDefault(); dispatchKey('back'); } });
   window.addEventListener('wheel', markActive, { passive: true });
   new MutationObserver(scheduleRecover).observe(document.getElementById('root')!, { childList: true, subtree: true });

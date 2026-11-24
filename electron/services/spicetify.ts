@@ -5,15 +5,16 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { broadcast, fetchBuffer, fetchJson } from './bus';
+import { loadSettings, saveSettings } from '../db';
 import { log } from './log';
 
 // Optional Spotify customisation with the open-source Spicetify project (https://spicetify.app), installed only when the user
 // agrees. It adds Spicetify's CLI, the Marketplace (browse/install themes & extensions inside Spotify) and one polished theme
 // (Sleek). It deliberately does NOT include any ad-blocking extension — that would circumvent Spotify's ad-supported model.
 //
-// Spicetify can only patch the regular Spotify desktop app (%APPDATA%\Spotify). The Microsoft Store edition of Spotify lives in
-// the protected WindowsApps folder and cannot be modified, so — with the user's explicit agreement — it is replaced by the
-// official desktop edition (same account, same music) before Spicetify is applied.
+// SAFETY RULE: this installer never uninstalls, deletes or replaces anything the user already has. Spicetify can only patch the
+// regular Spotify desktop app (%APPDATA%\Spotify), not the Microsoft Store edition, so when only the Store edition exists the
+// desktop edition is installed NEXT TO it and the Store edition stays exactly as it was. "Restore" undoes Spicetify's changes.
 
 const LOCAL = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
 const ROAMING = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
@@ -24,6 +25,7 @@ const SPOTIFY = path.join(SPOTIFY_DIR, 'Spotify.exe');
 const PREFS = path.join(SPOTIFY_DIR, 'prefs');
 const USERDATA = path.join(ROAMING, 'spicetify');
 const SPOTIFY_SETUP_URL = 'https://download.scdn.co/SpotifyFullSetup.exe'; // Spotify's own installer
+const MARKER = () => path.join(app.getPath('userData'), 'spicetify-managed.json');
 
 export const SCHEMES = ['Deep', 'Deeper', 'UltraBlack', 'Cherry', 'Coral', 'Wealthy', 'Greener', 'Nord'];
 
@@ -78,19 +80,22 @@ async function latestAsset(repo: string, match: RegExp) {
 
 const startSpotify = () => { try { spawn(SPOTIFY, [], { detached: true, stdio: 'ignore' }).unref(); } catch { /* ignore */ } };
 
-// Replace the Store edition (or install from scratch) with the regular desktop edition from Spotify.
-async function ensureDesktopSpotify(replaceStore: boolean) {
+// Make the Spotify tile follow the customised desktop app (or back to whatever Spotify exists) — nothing is deleted.
+function pointSpotifyTile(target: string | null) {
+  try {
+    const s = loadSettings(); const native = { ...(s.nativeApps || {}) };
+    if (target) native.spotify = target; else delete native.spotify;
+    saveSettings({ nativeApps: native });
+    broadcast('settings:changed', {});
+  } catch (e) { log.warn('Could not update the Spotify tile', e); }
+}
+
+// Install the regular desktop edition from Spotify next to whatever is already there. Nothing is removed.
+async function ensureDesktopSpotify() {
   if (fs.existsSync(SPOTIFY)) return;
   const store = await hasStoreSpotify();
-  if (store && !replaceStore) throw new Error('STORE_VERSION');
-
-  step(6, 'Closing Spotify…');
+  step(6, store ? 'Adding the Spotify desktop app next to your Microsoft Store Spotify (yours is not removed)…' : 'Preparing Spotify for Windows…');
   await run('taskkill', ['/IM', 'Spotify.exe', '/F'], 15000);
-  if (store) {
-    step(9, 'Removing the Microsoft Store edition of Spotify…');
-    const r = await ps('Get-AppxPackage -Name SpotifyAB.SpotifyMusic | Remove-AppxPackage', 120000);
-    if (!r.ok) throw new Error('Could not remove the Microsoft Store edition of Spotify: ' + r.out.slice(0, 200));
-  }
   step(14, 'Downloading Spotify for Windows from Spotify…');
   const setupPath = path.join(app.getPath('temp'), 'SpotifyFullSetup.exe');
   fs.writeFileSync(setupPath, await download(SPOTIFY_SETUP_URL));
@@ -100,7 +105,8 @@ async function ensureDesktopSpotify(replaceStore: boolean) {
   await run(setupPath, ['/silent'], 240000);
   try { fs.unlinkSync(setupPath); } catch { /* ignore */ }
   for (let i = 0; i < 60 && !fs.existsSync(SPOTIFY); i++) await sleep(2000);
-  if (!fs.existsSync(SPOTIFY)) throw new Error('Spotify did not finish installing. Try installing it from spotify.com/download, then run this again.');
+  if (!fs.existsSync(SPOTIFY)) throw new Error('The Spotify desktop app could not be installed next to your current Spotify. Nothing was changed or removed. You can install it from spotify.com/download yourself and run this again.');
+  try { fs.writeFileSync(MARKER(), JSON.stringify({ installedAt: Date.now(), hadStore: store })); } catch { /* ignore */ }
 }
 
 // Spicetify needs Spotify's "prefs" file, which exists once Spotify has been started once.
@@ -114,10 +120,10 @@ async function ensurePrefs() {
   if (!fs.existsSync(PREFS)) throw new Error('Spotify has not created its settings yet. Open Spotify once, sign in, close it, then run this again.');
 }
 
-export async function install(scheme: string, replaceStore = false): Promise<{ ok: boolean; error?: string; needsReplace?: boolean }> {
+export async function install(scheme: string): Promise<{ ok: boolean; error?: string }> {
   try {
     if (!SCHEMES.includes(scheme)) scheme = 'Deep';
-    await ensureDesktopSpotify(replaceStore);
+    await ensureDesktopSpotify();
     await ensurePrefs();
     await run('taskkill', ['/IM', 'Spotify.exe', '/F'], 15000);
 
@@ -160,25 +166,27 @@ export async function install(scheme: string, replaceStore = false): Promise<{ o
     log.info('spicetify backup apply: ' + bk.out.slice(-400));
     if (!bk.ok && !/success|applied|backup/i.test(bk.out)) throw new Error('Spicetify could not patch Spotify: ' + bk.out.slice(-300));
 
+    pointSpotifyTile(SPOTIFY);
     step(96, 'Starting Spotify…');
     startSpotify();
-    step(100, 'Done — Spotify now has the Marketplace and the Sleek theme.', { done: true });
+    step(100, 'Done — the Spotify desktop app now has the Marketplace and the Sleek theme. Your other Spotify was not touched.', { done: true });
     return { ok: true };
   } catch (e: any) {
-    if (e?.message === 'STORE_VERSION') {
-      step(0, 'Your Spotify is the Microsoft Store edition, which cannot be customised. Agree to replace it with the regular Spotify desktop app and try again.', { error: true });
-      return { ok: false, needsReplace: true, error: 'STORE_VERSION' };
-    }
     log.error('Spicetify install failed', e);
     step(0, e?.message || 'Installation failed.', { error: true });
     return { ok: false, error: e?.message || 'Installation failed.' };
   }
 }
 
+// Restore = undo exactly what Spicetify changed. Spotify itself, your account and your tiles are kept.
 export async function restore(): Promise<{ ok: boolean; error?: string }> {
   if (!fs.existsSync(CLI)) return { ok: false, error: 'Spicetify is not installed.' };
   await run('taskkill', ['/IM', 'Spotify.exe', '/F'], 15000);
   const r = await run(CLI, ['restore'], 120000);
+  if (r.ok) {
+    pointSpotifyTile(null); // the tile re-detects whichever Spotify is installed
+    try { fs.unlinkSync(MARKER()); } catch { /* ignore */ }
+  }
   if (fs.existsSync(SPOTIFY)) startSpotify();
   return r.ok ? { ok: true } : { ok: false, error: r.out.slice(-300) || 'Restore failed.' };
 }

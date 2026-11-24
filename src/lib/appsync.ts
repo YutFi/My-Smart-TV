@@ -20,15 +20,27 @@ export async function syncApps(force = false) {
     const dismissed = new Set(st.settings.dismissedApps);
     const nativeApps = { ...st.settings.nativeApps };
     let nativeChanged = false; const added: string[] = [];
+    const byBuiltin = new Map<string, typeof found>();
     for (const a of found) {
       if (dismissed.has(a.appId)) continue;
       if (a.builtin) {
-        if (nativeApps[a.builtin] !== a.appId) { nativeApps[a.builtin] = a.appId; nativeChanged = true; added.push(a.name); }
+        (byBuiltin.get(a.builtin) || byBuiltin.set(a.builtin, []).get(a.builtin)!).push(a);
       } else if (!have.has(`uwp:${a.appId}`)) {
         await api.lists.toggle(pid(), 'sites', { kind: 'uwp', ref: a.appId, title: a.name, image: '' });
         added.push(a.name);
       }
     }
+    // one Windows app per built-in tile: keep the current link while it still exists (so two installs never flip-flop),
+    // otherwise prefer a regular desktop install over a Store one
+    for (const [builtin, list] of byBuiltin) {
+      const cur = nativeApps[builtin];
+      if (cur && list.some((x) => x.appId === cur)) continue;
+      const pick = list.find((x) => /^[A-Za-z]:\\/.test(x.appId)) || list[0];
+      nativeApps[builtin] = pick.appId; nativeChanged = true; added.push(pick.name);
+    }
+    // a linked Windows app that was uninstalled: fall back to the website instead of a tile that opens nothing
+    const liveIds = new Set(found.map((a) => a.appId));
+    for (const [builtin, id] of Object.entries(nativeApps)) { if (!liveIds.has(id)) { delete nativeApps[builtin]; nativeChanged = true; } }
     if (nativeChanged) await updateSettings({ nativeApps });
     if (added.length) toast(`Added to MY SMART TV: ${added.slice(0, 3).join(', ')}${added.length > 3 ? ` +${added.length - 3} more` : ''}`, 'ok', 6500);
   } catch { /* discovery is best-effort */ } finally { running = false; }

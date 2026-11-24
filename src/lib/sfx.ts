@@ -157,5 +157,5 @@ export function initSfx() {
     if (t && !t.hasAttribute('data-disabled') && !t.closest('[data-silent]') && !t.hasAttribute('data-silent')) play('select');
   }, true);
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'BrowserBack') play('back'); }, true);
-  window.addEventListener('contextmenu', () => play('back'));
+  window.addEventListener('contextmenu', (e) => { if (!(e.target as HTMLElement | null)?.closest?.('[data-tile]')) play('back'); });
 }

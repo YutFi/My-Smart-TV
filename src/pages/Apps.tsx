@@ -5,7 +5,9 @@ import { Button, Card, Focusable, Loading, Modal, Row } from '../components/ui';
 import { TextField } from '../components/osk';
 import { AppTile, PageScroll, SiteTile } from '../components/content';
 import { Header } from './Titles';
-import { syncApps, dismissApp } from '../lib/appsync';
+import { syncApps } from '../lib/appsync';
+import { useStore } from '../lib/store';
+import { restoreBuiltin, restoreDismissed, tilesStore } from '../lib/tiles';
 import { STREAMING_APPS } from '../../shared/types';
 
 export function openStore(query?: string) {
@@ -15,13 +17,15 @@ export function openStore(query?: string) {
 
 export function Apps() {
   const { settings } = useApp();
-  const recents = useAsync(() => api.launch.recents(pid()), []);
-  const sites = useAsync(() => api.lists.get(pid(), 'sites'), []);
+  const { version } = useStore(tilesStore);
+  const recents = useAsync(() => api.launch.recents(pid()), [version]);
+  const sites = useAsync(() => api.lists.get(pid(), 'sites'), [version]);
   const browsers = useAsync(() => api.launch.browsers(), []);
   const [add, setAdd] = useState(false);
   const [picker, setPicker] = useState(false);
+  const [manage, setManage] = useState(false);
   const [name, setName] = useState(''); const [url, setUrl] = useState('https://');
-  const recent = (recents.data || []).map((id) => STREAMING_APPS.find((a) => a.id === id)).filter(Boolean) as typeof STREAMING_APPS;
+  const recent = (recents.data || []).map((id) => STREAMING_APPS.find((a) => a.id === id)).filter((a) => a && !settings.hiddenApps.includes(a.id)) as typeof STREAMING_APPS;
   const noBrowser = browsers.data && !browsers.data.edge && !browsers.data.chrome;
   return (
     <PageScroll>
@@ -38,17 +42,16 @@ export function Apps() {
           await api.lists.toggle(pid(), 'sites', { kind: 'exe', ref: p, title, image: '' });
           sites.reload(); toast(`${title} added — it also appears on Home`, 'ok');
         }}>Add a program / game</Button>
+        <Button icon="🧹" onSelect={() => setManage(true)}>Manage tiles</Button>
         <Button icon="↻" onSelect={async () => { await syncApps(true); sites.reload(); toast('Checked for new streaming apps', 'info', 2500); }}>Scan now</Button>
       </div>
       {settings.autoAddApps && <div className="px-[3.5rem] pb-[0.4rem] text-[1.05rem] text-white/45">Install a streaming or entertainment app from the Microsoft Store and it appears here and on Home by itself.</div>}
       {noBrowser && <div className="mx-[3.5rem] mb-[0.8rem] rounded-xl bg-amber-500/15 px-[1.2rem] py-[0.8rem] text-[1.1rem] text-amber-200">Microsoft Edge or Google Chrome wasn’t found, so apps will open in your default browser instead.</div>}
       {recent.length > 0 && <Row title="Recently Opened">{recent.map((a) => <AppTile key={a.id} app={a} fk={`r:${a.id}`} />)}</Row>}
-      <Row title="All Apps">{STREAMING_APPS.map((a) => <AppTile key={a.id} app={a} fk={`a:${a.id}`} />)}</Row>
-      <Row title="My Apps, Programs & Websites" subtitle="Press Menu on a tile to remove it">
+      <Row title="All Apps">{STREAMING_APPS.filter((a) => !settings.hiddenApps.includes(a.id)).map((a) => <AppTile key={a.id} app={a} fk={`a:${a.id}`} />)}</Row>
+      <Row title="My Apps, Programs & Websites" subtitle="Menu key, right-click or press-and-hold a tile to remove it">
         {sites.data?.map((s) => (
-          <SiteTile key={s.kind + s.ref} it={s} fk={`site:${s.kind}:${s.ref}`} onKey={(e) => {
-            if (e.k === 'menu') { (s.kind === 'uwp' ? dismissApp(s.ref) : Promise.resolve()).then(() => api.lists.toggle(pid(), 'sites', s)).then(sites.reload); return true; }
-          }} />
+          <SiteTile key={s.kind + s.ref} it={s} fk={`site:${s.kind}:${s.ref}`} />
         ))}
         <Card fk="site:store" shape="logo" title="Get more apps" sub="Microsoft Store" icon="🛍" onSelect={() => openStore()} />
         <Card fk="site:add" shape="logo" title="Add website" sub="Name + address" icon="＋" onSelect={() => setAdd(true)} />
@@ -61,6 +64,7 @@ export function Apps() {
           <div className="flex flex-col gap-[0.8rem]"><TextField label="Name" value={name} onChange={setName} placeholder="e.g. Plex" /><TextField label="Address" value={url} onChange={setUrl} mode="url" /></div>
         </Modal>
       )}
+      {manage && <ManageTiles onClose={() => setManage(false)} />}
       {picker && <InstalledAppsPicker onClose={() => setPicker(false)} onAdded={() => sites.reload()} />}
     </PageScroll>
   );
@@ -89,6 +93,26 @@ function InstalledAppsPicker({ onClose, onAdded }: { onClose: () => void; onAdde
         ))}
         {!apps.loading && list.length === 0 && <div className="py-[1rem] text-white/55">No matching apps.</div>}
       </div>
+    </Modal>
+  );
+}
+
+// Everything the user removed can be brought back here — removing a tile never uninstalls anything.
+function ManageTiles({ onClose }: { onClose: () => void }) {
+  const { settings } = useApp();
+  const installed = useAsync(() => api.apps.installed(), []);
+  const nameOf = (id: string) => installed.data?.find((a) => a.appId === id)?.name || id.split(/[\\!]/).pop() || id;
+  const hidden = STREAMING_APPS.filter((a) => settings.hiddenApps.includes(a.id));
+  const dismissed = settings.dismissedApps;
+  return (
+    <Modal title="Manage tiles" onClose={onClose} width={60} footer={<Button autoFocus primary onSelect={onClose}>Done</Button>}>
+      <p className="mb-[0.8rem] text-[1.05rem] text-white/55">Tiles you removed are listed here. Bring any back with one click. Removing a tile never uninstalls the app.</p>
+      <div data-vscroll="" className="flex max-h-[48vh] flex-col gap-[0.4rem] overflow-y-auto">
+        {hidden.length === 0 && dismissed.length === 0 && <div className="py-[1rem] text-white/60">You haven’t removed any tiles.</div>}
+        {hidden.map((a) => <Focusable key={a.id} className="f-tile flex items-center justify-between px-[1.2rem] py-[0.7rem] text-[1.2rem]" onSelect={() => restoreBuiltin(a.id)}><span>{a.name}</span><span className="text-accent-cyan">↩ Bring back</span></Focusable>)}
+        {dismissed.map((id) => <Focusable key={id} className="f-tile flex items-center justify-between px-[1.2rem] py-[0.7rem] text-[1.2rem]" onSelect={async () => { await restoreDismissed(id); syncApps(true); }}><span className="clamp-1">{nameOf(id)}</span><span className="text-accent-cyan">↩ Bring back</span></Focusable>)}
+      </div>
+      {(hidden.length > 0 || dismissed.length > 0) && <div className="mt-[0.8rem]"><Button onSelect={async () => { for (const a of hidden) await restoreBuiltin(a.id); for (const id of dismissed) await restoreDismissed(id); syncApps(true); toast('All tiles are back', 'ok'); }}>Bring everything back</Button></div>}
     </Modal>
   );
 }

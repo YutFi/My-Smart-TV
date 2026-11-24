@@ -1,4 +1,6 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import { shell } from 'electron';
 import { log } from './log';
 
@@ -46,6 +48,11 @@ const SAFE_ID = /^[\w.!{}\-\\ :()[\]/&+,]+$/;
 export function launchShellApp(appId: string): { ok: boolean; error?: string } {
   if (!SAFE_ID.test(appId) || appId.includes('"')) return { ok: false, error: 'That app address is not valid.' };
   try {
+    if (/^[A-Za-z]:\\.+\.exe$/i.test(appId)) {
+      if (!fs.existsSync(appId)) return { ok: false, error: 'That program is no longer installed.' };
+      spawn(appId, [], { detached: true, stdio: 'ignore', cwd: path.dirname(appId) }).unref();
+      log.info(`Launched program ${appId}`); return { ok: true };
+    }
     execFile('explorer.exe', [`shell:AppsFolder\\${appId}`], { windowsHide: true }, () => undefined);
     log.info(`Launched Start-menu app ${appId}`);
     return { ok: true };
@@ -53,7 +60,7 @@ export function launchShellApp(appId: string): { ok: boolean; error?: string } {
 }
 
 export function openStore(query?: string) {
-  const uri = query ? `ms-windows-store://search/?query=${encodeURIComponent(query)}` : 'ms-windows-store://home';
+  const uri = query?.startsWith('pdp:') && /^[A-Z0-9]{12}$/i.test(query.slice(4)) ? `ms-windows-store://pdp/?ProductId=${query.slice(4)}` : query ? `ms-windows-store://search/?query=${encodeURIComponent(query)}` : 'ms-windows-store://home';
   shell.openExternal(uri).catch(() => undefined);
   // the Store opens in its own window on top of the TV screen — nothing else needs to change
   return { ok: true };

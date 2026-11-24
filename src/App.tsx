@@ -7,6 +7,7 @@ import { PlayerHost } from './components/PlayerHost';
 import { Screensaver } from './components/Screensaver';
 import { FocusGlow } from './components/Effects';
 import { Splash } from './components/Splash';
+import { TileMenu } from './components/TileMenu';
 import { BootSplash } from './components/BootSplash';
 import { cancelSplash } from './lib/splash';
 import { configureSfx, initSfx, play } from './lib/sfx';
@@ -177,6 +178,7 @@ function AppInner() {
       {gate && <PinPrompt title="Parental PIN to leave Kids profile" onClose={() => setGate(false)} onVerify={async (p) => { if (await api.parental.verify(p)) { setGate(false); await reloadProfiles(); setPicking(true); return true; } return false; }} />}
       {power && <PowerMenu onClose={() => setPower(false)} onProfile={switchProfile} />}
       <FocusGlow />
+      <TileMenu />
       <Splash />
       <PlayerHost />
       <Screensaver />

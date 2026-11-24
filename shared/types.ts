@@ -45,6 +45,7 @@ export interface Settings {
   autoAddApps: boolean;
   nativeApps: Record<string, string>; // built-in tile id -> installed Windows app id
   dismissedApps: string[];
+  hiddenApps: string[]; // built-in tiles the user removed from Apps/Home
   bootSplash: boolean;
   nebulaMode: 'desktop' | 'web';
   animatedBackground: boolean;
@@ -102,6 +103,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoAddApps: true,
   nativeApps: {},
   dismissedApps: [],
+  hiddenApps: [],
   bootSplash: true,
   nebulaMode: 'desktop',
   animatedBackground: true,

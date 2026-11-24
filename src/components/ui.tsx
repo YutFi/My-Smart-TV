@@ -6,16 +6,21 @@ import { pushScope, popScope, registerElementKeys, useKeys, type KeyEv } from '.
 // ---------- Focusable ----------
 export interface FocusableProps {
   className?: string; style?: CSSProperties; children?: ReactNode; onSelect?: () => void; onKey?: (e: KeyEv) => boolean | void;
-  fk?: string; autoFocus?: boolean; disabled?: boolean; onFocus?: () => void; title?: string; tag?: 'div' | 'button'; silent?: boolean;
+  fk?: string; autoFocus?: boolean; disabled?: boolean; onFocus?: () => void; title?: string; tag?: 'div' | 'button'; silent?: boolean; tile?: boolean;
 }
-export function Focusable({ className = '', style, children, onSelect, onKey, fk, autoFocus, disabled, onFocus, title, silent }: FocusableProps) {
+export function Focusable({ className = '', style, children, onSelect, onKey, fk, autoFocus, disabled, onFocus, title, silent, tile }: FocusableProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const hold = useRef<{ timer?: number; fired: boolean }>({ fired: false });
   useEffect(() => { registerElementKeys(ref.current, onKey || null); return () => registerElementKeys(ref.current, null); });
+  // tiles: press and hold (touch, touchpad, air mouse) opens the tile menu, same as the Menu key or right-click
+  const startHold = () => { if (!tile || !onKey) return; hold.current.fired = false; window.clearTimeout(hold.current.timer); hold.current.timer = window.setTimeout(() => { hold.current.fired = true; onKey({ k: 'menu', ch: '', ev: null, repeat: false }); }, 700); };
+  const endHold = () => window.clearTimeout(hold.current.timer);
   return (
     <div
-      ref={ref} data-f="" data-fk={fk} data-autofocus={autoFocus ? '' : undefined} data-disabled={disabled ? '' : undefined} data-silent={silent ? '' : undefined}
+      ref={ref} data-f="" data-fk={fk} data-autofocus={autoFocus ? '' : undefined} data-disabled={disabled ? '' : undefined} data-silent={silent ? '' : undefined} data-tile={tile ? '' : undefined}
       tabIndex={-1} role="button" aria-label={title} className={className} style={style} onFocus={onFocus}
-      onClick={(e) => { if (!disabled) { e.stopPropagation(); onSelect?.(); } }}
+      onPointerDown={startHold} onPointerUp={endHold} onPointerLeave={endHold} onPointerCancel={endHold}
+      onClick={(e) => { if (hold.current.fired) { hold.current.fired = false; e.stopPropagation(); return; } if (!disabled) { e.stopPropagation(); onSelect?.(); } }}
     >{children}</div>
   );
 }

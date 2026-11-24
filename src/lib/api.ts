@@ -123,7 +123,7 @@ export const api = {
   },
   spicetify: {
     status: (): Promise<{ spotifyInstalled: boolean; storeVersion: boolean; installed: boolean; theme: string }> => inv('spicetify:status'),
-    install: (scheme: string, replaceStore = false): Promise<{ ok: boolean; error?: string; needsReplace?: boolean }> => inv('spicetify:install', scheme, replaceStore),
+    install: (scheme: string): Promise<{ ok: boolean; error?: string }> => inv('spicetify:install', scheme),
     restore: (): Promise<{ ok: boolean; error?: string }> => inv('spicetify:restore'),
     openSpotify: (): Promise<boolean> => inv('spicetify:open'),
   },

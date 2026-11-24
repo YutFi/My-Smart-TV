@@ -248,7 +248,7 @@ export function registerIpc(hooks: { applyDisplay: () => void; setDesktopMode: (
   });
   handle('apps:icon', async (_e, p: string) => { try { return (await app.getFileIcon(String(p), { size: 'large' })).toDataURL(); } catch { return ''; } });
   handle('spicetify:status', () => spicetify.status());
-  handle('spicetify:install', (_e, scheme: string, replaceStore?: boolean) => spicetify.install(String(scheme), !!replaceStore));
+  handle('spicetify:install', (_e, scheme: string) => spicetify.install(String(scheme)));
   handle('spicetify:restore', () => spicetify.restore());
   handle('spicetify:open', () => spicetify.openSpotify());
   handle('apps:installed', () => appsSvc.listInstalledApps());
